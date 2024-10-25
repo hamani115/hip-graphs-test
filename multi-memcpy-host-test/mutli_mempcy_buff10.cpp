@@ -1,18 +1,13 @@
 #include <stdio.h>
 #include <iostream>
+
+// HIP API header
 #include <hip/hip_runtime.h>
 
-#define HIP_CHECK(call)                                                           \
-    do {                                                                          \
-        hipError_t err = call;                                                    \
-        if (err != hipSuccess) {                                                  \
-            fprintf(stderr, "HIP error at %s:%d: %s\n", __FILE__, __LINE__,       \
-                    hipGetErrorString(err));                                      \
-            exit(err);                                                            \
-        }                                                                         \
-    } while (0)
+// Local headers
+#include "../hip_check.h"
 
-#define N (1 << 12)  // Size of the arrays
+#define N (1 << 12)  // Size of the arrays - 4096
 #define NSTEP 10000  // Number of steps
 
 // HIP kernel to add 10 arrays element-wise

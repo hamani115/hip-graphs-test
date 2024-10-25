@@ -3,16 +3,7 @@
 #include <chrono>
 #include <iostream>
 
-// Define error checking macro
-#define HIP_CHECK(call)                                                           \
-    do {                                                                          \
-        hipError_t err = call;                                                    \
-        if (err != hipSuccess) {                                                  \
-            fprintf(stderr, "HIP error at %s:%d: %s\n", __FILE__, __LINE__,       \
-                    hipGetErrorString(err));                                      \
-            exit(err);                                                            \
-        }                                                                         \
-    } while (0)
+#include "../hip_check.h"
 
 #define N 64 //(1<<6) // Matrix dimensions (4096x4096)
 
@@ -32,64 +23,73 @@ __global__ void matMulKernel(float* A, float* B, float* C, int width) {
     }
 }
 
-void matrixMultiplyNoGraph2(float* A, float* B, float* C, int width) {
-    dim3 block(32, 32); // 1024 threads
-    // dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
-    dim3 grid(6,6); // 36 Blocks
+void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
+    dim3 block(32, 32);
+    // dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y); //()im
+    dim3 grid(6, 6);
 
     hipStream_t stream;
     HIP_CHECK(hipStreamCreate(&stream));
 
+    // Create the HIP graph
+    hipGraph_t graph;
+    hipGraphExec_t graphExec;
     hipEvent_t start, stop;
     float elapsedTime = 0.0f;
-    float firstTime = 0.0f;
-    float totalTime = 0.0f;
-    float upperTime = 0.0f; 
+    float graphCreateTime = 0.0f;
+    float totalTime = 0.0f; 
+    float upperTime = 0.0f;
     float lowerTime = 0.0f; 
-    int skipBy = 0; 
-    HIP_CHECK(hipEventCreate(&start));
+    int skipBy = 0;  
+    HIP_CHECK(hipEventCreate(&start)); 
     HIP_CHECK(hipEventCreate(&stop)); 
 
     HIP_CHECK(hipEventRecord(start, stream)); 
+    // Begin graph capture
+    HIP_CHECK(hipStreamBeginCapture(stream, hipStreamCaptureModeGlobal));
+    
     for (int i = 0; i < NKERNEL; i++) {  // Run NKERNEL iterations
         hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, A, B, C, width);
     }
-    // Synchronize after all kernels have been launched
-    HIP_CHECK(hipStreamSynchronize(stream)); // Ensure all kernels finish
+
+    // End graph capture
+    HIP_CHECK(hipStreamEndCapture(stream, &graph));
+    HIP_CHECK(hipGraphInstantiate(&graphExec, graph, NULL, NULL, 0));
+
     HIP_CHECK(hipEventRecord(stop, stream));
     HIP_CHECK(hipEventSynchronize(stop)); 
-    HIP_CHECK(hipEventElapsedTime(&firstTime, start, stop)); 
+    HIP_CHECK(hipEventElapsedTime(&graphCreateTime, start, stop)); 
 
-    for (int j = 0; j < NSTEP - 1; j++) {
-
+    for (int i = 0; i < NSTEP - 1; i++) {
         HIP_CHECK(hipEventRecord(start, stream));  
-        for (int i = 0; i < NKERNEL; i++) {  // Run NKERNEL iterations
-            hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, A, B, C, width);
-        }
-        // Synchronize after all kernels have been launched
+        // Launch the graph
+        HIP_CHECK(hipGraphLaunch(graphExec, stream));
         HIP_CHECK(hipStreamSynchronize(stream)); // Ensure all kernels finish
+
         HIP_CHECK(hipEventRecord(stop, stream));
         HIP_CHECK(hipEventSynchronize(stop)); 
-        HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop)); 
-        if(j >= skipBy){ 
-            totalTime += elapsedTime; 
+        HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop));  
+        if(i >= skipBy){
+            totalTime += elapsedTime;  
             if(elapsedTime > upperTime) { 
-                upperTime = elapsedTime;
-            }   
-            if(elapsedTime < lowerTime) {
+                upperTime = elapsedTime; 
+            } 
+            if(elapsedTime < lowerTime) { 
+                lowerTime = elapsedTime; 
+            }  
+            if(i == skipBy){ 
                 lowerTime = elapsedTime; 
             } 
-            if(j == skipBy){
-                lowerTime = elapsedTime; 
-            }   
-        }  
+        }
     }
-    float AverageTime = (totalTime + firstTime) / (NSTEP - skipBy);
+    float AverageTime = (totalTime + graphCreateTime) / (NSTEP - skipBy);
     std::cout << "Average Time: " << AverageTime << "ms" << std::endl;
     std::cout << "Time Spread: " << upperTime <<  " - " << lowerTime << "ms" << std::endl;
-    std::cout << "Total Time without first run: " << totalTime << "ms" << std::endl;
-    std::cout << "Total Time with first run: " << (totalTime + firstTime) << "ms" << std::endl;
-
+    std::cout << "Total Time without Graph Create: " << totalTime << "ms" << std::endl;
+    std::cout << "Total Time with Graph Create: " << totalTime + graphCreateTime << "ms" << std::endl;
+    // Cleanup
+    HIP_CHECK(hipGraphDestroy(graph));
+    HIP_CHECK(hipGraphExecDestroy(graphExec));
     HIP_CHECK(hipStreamDestroy(stream));
 }
 
@@ -117,7 +117,7 @@ int main() {
 
     // Measure time
     auto start = std::chrono::high_resolution_clock::now();
-    matrixMultiplyNoGraph2(d_A, d_B, d_C, N);
+    matrixMultiplyWithGraph(d_A, d_B, d_C, N);
     auto end = std::chrono::high_resolution_clock::now();
 
     // Copy result back to host
@@ -125,7 +125,7 @@ int main() {
 
     // Calculate elapsed time
     std::chrono::duration<double> elapsed = end - start;
-    printf("Elapsed time without HIP Graphs: %f seconds\n", elapsed.count());
+    printf("Elapsed time with HIP Graphs: %f seconds\n", elapsed.count());
 
     // Cleanup
     free(h_A); free(h_B); free(h_C);
