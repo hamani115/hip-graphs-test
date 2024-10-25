@@ -108,6 +108,7 @@ int main() {
                        d_a1, d_a2, d_a3, d_a4, d_a5,
                        d_a6, d_a7, d_a8, d_a9, d_a10,
                        d_result);
+    HIP_CHECK(hipGetLastError()); // Check for any errors from the launch
 
     // Copy result back to host asynchronously
     HIP_CHECK(hipMemcpyAsync(h_result, d_result, size, hipMemcpyDeviceToHost, stream));
@@ -121,6 +122,7 @@ int main() {
     HIP_CHECK(hipEventElapsedTime(&firstTime, start, stop));
 
     for (int istep = 0; istep < NSTEP - 1; istep++) {
+        // Modifying buffers
         for (int i = 0; i < N; i++) {
             h_a1[i] += 1.0f; // or any other modification
             h_a2[i] += 1.0f;
@@ -154,6 +156,7 @@ int main() {
                            d_a1, d_a2, d_a3, d_a4, d_a5,
                            d_a6, d_a7, d_a8, d_a9, d_a10,
                            d_result);
+        HIP_CHECK(hipGetLastError()); // Check for any errors from the launch
 
         // Copy result back to host asynchronously
         HIP_CHECK(hipMemcpyAsync(h_result, d_result, size, hipMemcpyDeviceToHost, stream));
@@ -166,6 +169,7 @@ int main() {
         HIP_CHECK(hipEventSynchronize(stop));
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop));
 
+        // Time Calculations
         if (istep >= skipBy) {
             totalTime += elapsedTime;
             if (elapsedTime > upperTime) {

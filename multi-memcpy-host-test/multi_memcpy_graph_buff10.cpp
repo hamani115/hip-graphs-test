@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <iostream>
+
+// HIP API header
 #include <hip/hip_runtime.h>
 
+// local header
 #include "../hip_check.h"
 
 #define N (1 << 12)  // Size of the arrays - 4096
 #define NSTEP 10000  // Number of steps
-// #define NKERNEL 1 // Number of kernels
 
 // HIP kernel to add 10 arrays element-wise
 __global__ void add_arrays(float* a1, float* a2, float* a3, float* a4, float* a5,
@@ -88,9 +90,11 @@ int main() {
 
     HIP_CHECK(hipEventRecord(start, stream));
 
-    // Graph
+    // Graph Creation
     hipGraph_t graph;
     hipGraphExec_t instance;
+
+    // Begin Capture
     HIP_CHECK(hipStreamBeginCapture(stream, hipStreamCaptureModeGlobal));
 
     // Copy host arrays to device arrays asynchronously
@@ -110,14 +114,16 @@ int main() {
                        d_a1, d_a2, d_a3, d_a4, d_a5,
                        d_a6, d_a7, d_a8, d_a9, d_a10,
                        d_result);
-
+    HIP_CHECK(hipGetLastError()); // Check for any errors from the launch
+    
     // Copy result back to host asynchronously
     HIP_CHECK(hipMemcpyAsync(h_result, d_result, size, hipMemcpyDeviceToHost, stream));
 
-    // End Capture
+    // End Capture and instantiate the graph
     HIP_CHECK(hipStreamEndCapture(stream, &graph));
     HIP_CHECK(hipGraphInstantiate(&instance, graph, NULL, NULL, 0));
 
+    // End Timer for graph creation
     HIP_CHECK(hipEventRecord(stop, stream));
     HIP_CHECK(hipEventSynchronize(stop));
     HIP_CHECK(hipEventElapsedTime(&graphCreateTime, start, stop));
@@ -137,7 +143,7 @@ int main() {
             h_a10[i] += 1.0f;
         }
 
-        // Start Timer
+        // Start Timer for each iteration
         HIP_CHECK(hipEventRecord(start, stream));
 
         // Launch Graph
@@ -145,11 +151,12 @@ int main() {
         // Synchronize the stream to ensure all operations are complete
         HIP_CHECK(hipStreamSynchronize(stream));
 
-        // End Timer
+        // End Timer for each iteration
         HIP_CHECK(hipEventRecord(stop, stream));
         HIP_CHECK(hipEventSynchronize(stop));
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop));
 
+        // Calculate total time and spread
         if (istep >= skipBy) {
             totalTime += elapsedTime;
             if (elapsedTime > upperTime) {
@@ -162,6 +169,7 @@ int main() {
                 lowerTime = elapsedTime;
             }
         }
+        // Uncomment to see elapsed time per iteration
         // std::cout << "Elapsed time " << istep << ": " << elapsedTime << "ms" << std::endl;
     }
 

@@ -1,8 +1,11 @@
-#include <hip/hip_runtime.h>
 #include <stdio.h>
-#include <chrono>
+// #include <chrono>
 #include <iostream>
 
+// HIP API header
+#include <hip/hip_runtime.h>
+
+// local header
 #include "../hip_check.h"
 
 #define N 64 //(1<<6) // Matrix dimensions (4096x4096)
@@ -24,13 +27,16 @@ __global__ void matMulKernel(float* A, float* B, float* C, int width) {
 }
 
 void matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
+    // Setup block and grid sizes
     dim3 block(32, 32); // 1024 threads
     // dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
     dim3 grid(6,6); // 36 Blocks
 
+    // Create a stream
     hipStream_t stream;
     HIP_CHECK(hipStreamCreate(&stream));
 
+    // Setup the timer variables
     hipEvent_t start, stop;
     float elapsedTime = 0.0f;
     float firstTime = 0.0f;
@@ -41,27 +47,40 @@ void matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
     HIP_CHECK(hipEventCreate(&start));
     HIP_CHECK(hipEventCreate(&stop)); 
 
-    HIP_CHECK(hipEventRecord(start, stream)); 
-    for (int i = 0; i < NKERNEL; i++) {  // Run NKERNEL iterations
+    // Start the timer for the first run
+    HIP_CHECK(hipEventRecord(start, stream));
+
+    // Launch the kernel NKERNEL times
+    for (int i = 0; i < NKERNEL; i++) {
         hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, A, B, C, width);
     }
+    HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
     // Synchronize after all kernels have been launched
     HIP_CHECK(hipStreamSynchronize(stream)); // Ensure all kernels finish
+    
+    // Stop the timer for the first run
     HIP_CHECK(hipEventRecord(stop, stream));
     HIP_CHECK(hipEventSynchronize(stop)); 
     HIP_CHECK(hipEventElapsedTime(&firstTime, start, stop)); 
 
     for (int j = 0; j < NSTEP - 1; j++) {
 
-        HIP_CHECK(hipEventRecord(start, stream));  
+        // Start the timer for each runs
+        HIP_CHECK(hipEventRecord(start, stream));
+
+        // Launch the kernel NKERNEL times
         for (int i = 0; i < NKERNEL; i++) {  // Run NKERNEL iterations
             hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, A, B, C, width);
         }
-        // Synchronize after all kernels have been launched
+        HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
         HIP_CHECK(hipStreamSynchronize(stream)); // Ensure all kernels finish
+        
+        // Stop the timer for each runs
         HIP_CHECK(hipEventRecord(stop, stream));
         HIP_CHECK(hipEventSynchronize(stop)); 
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop)); 
+        
+        // Calculate the total time and the time spread
         if(j >= skipBy){ 
             totalTime += elapsedTime; 
             if(elapsedTime > upperTime) { 
@@ -75,12 +94,15 @@ void matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
             }   
         }  
     }
+
+    // Calculate the average time and print the results
     float AverageTime = (totalTime + firstTime) / (NSTEP - skipBy);
     std::cout << "Average Time: " << AverageTime << "ms" << std::endl;
     std::cout << "Time Spread: " << upperTime <<  " - " << lowerTime << "ms" << std::endl;
     std::cout << "Total Time without first run: " << totalTime << "ms" << std::endl;
     std::cout << "Total Time with first run: " << (totalTime + firstTime) << "ms" << std::endl;
 
+    // Cleanup
     HIP_CHECK(hipStreamDestroy(stream));
 }
 
@@ -107,16 +129,16 @@ int main() {
     HIP_CHECK(hipMemcpy(d_B, h_B, N * N * sizeof(float), hipMemcpyHostToDevice));
 
     // Measure time
-    auto start = std::chrono::high_resolution_clock::now();
-    matrixMultiplyNoGraph(d_A, d_B, d_C, N);
-    auto end = std::chrono::high_resolution_clock::now();
+    // auto start = std::chrono::high_resolution_clock::now();
+    // matrixMultiplyNoGraph(d_A, d_B, d_C, N);
+    // auto end = std::chrono::high_resolution_clock::now();
 
     // Copy result back to host
     HIP_CHECK(hipMemcpy(h_C, d_C, N * N * sizeof(float), hipMemcpyDeviceToHost));
 
     // Calculate elapsed time
-    std::chrono::duration<double> elapsed = end - start;
-    printf("Elapsed time without HIP Graphs: %f seconds\n", elapsed.count());
+    // std::chrono::duration<double> elapsed = end - start;
+    // printf("Elapsed time without HIP Graphs: %f seconds\n", elapsed.count());
 
     // Cleanup
     free(h_A); free(h_B); free(h_C);

@@ -34,8 +34,8 @@ int main()
     HIP_CHECK(hipSetDevice(MYDEVICE));
 
     // Create a HIP stream to execute asynchronous operations on this device
-    hipStream_t queue;
-    HIP_CHECK(hipStreamCreate(&queue));
+    hipStream_t stream;
+    HIP_CHECK(hipStreamCreate(&stream));
 
     size_t memSize = N * sizeof(float);
 
@@ -54,20 +54,20 @@ int main()
     float *d_result;
     float *d_a1, *d_a2, *d_a3, *d_a4, *d_a5, *d_a6, *d_a7, *d_a8, *d_a9, *d_a10;
 
-    HIP_CHECK(hipMallocAsync(&d_a1, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a2, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a3, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a4, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a5, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a6, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a7, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a8, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a9, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_a10, memSize, queue));
-    HIP_CHECK(hipMallocAsync(&d_result, memSize, queue)); // Allocate device memory for result
+    HIP_CHECK(hipMallocAsync(&d_a1, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a2, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a3, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a4, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a5, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a6, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a7, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a8, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a9, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_a10, memSize, stream));
+    HIP_CHECK(hipMallocAsync(&d_result, memSize, stream)); // Allocate device memory for result
 
     // Initialize d_result to zero
-    HIP_CHECK(hipMemsetAsync(d_result, 0, memSize, queue));
+    HIP_CHECK(hipMemsetAsync(d_result, 0, memSize, stream));
 
     // Set up grid and block dimensions
     int threadsPerBlock = 256;
@@ -85,62 +85,62 @@ int main()
     HIP_CHECK(hipEventCreate(&stop));
 
     // Host to device memory copy asynchronously
-    HIP_CHECK(hipMemcpyAsync(d_a1, h_a, memSize, hipMemcpyHostToDevice, queue));
+    HIP_CHECK(hipMemcpyAsync(d_a1, h_a, memSize, hipMemcpyHostToDevice, stream));
 
     // Start Timer for first run / graph Creation
-    HIP_CHECK(hipEventRecord(start, queue));
+    HIP_CHECK(hipEventRecord(start, stream));
 
     // BEGIN capturing the stream to create the HIP graph
     hipGraph_t graph;
-    HIP_CHECK(hipStreamBeginCapture(queue, hipStreamCaptureModeGlobal));
+    HIP_CHECK(hipStreamBeginCapture(stream, hipStreamCaptureModeGlobal));
 
     // Reset d_result to zero
-    HIP_CHECK(hipMemsetAsync(d_result, 0, memSize, queue));
+    HIP_CHECK(hipMemsetAsync(d_result, 0, memSize, stream));
 
     // Device to device memory copies asynchronously
-    HIP_CHECK(hipMemcpyAsync(d_a2, d_a1, memSize, hipMemcpyDeviceToDevice, queue));
-    HIP_CHECK(hipMemcpyAsync(d_a3, d_a2, memSize, hipMemcpyDeviceToDevice, queue));
-    HIP_CHECK(hipMemcpyAsync(d_a4, d_a3, memSize, hipMemcpyDeviceToDevice, queue));
-    HIP_CHECK(hipMemcpyAsync(d_a5, d_a4, memSize, hipMemcpyDeviceToDevice, queue));
-    HIP_CHECK(hipMemcpyAsync(d_a6, d_a5, memSize, hipMemcpyDeviceToDevice, queue));
-    HIP_CHECK(hipMemcpyAsync(d_a7, d_a6, memSize, hipMemcpyDeviceToDevice, queue));
-    HIP_CHECK(hipMemcpyAsync(d_a8, d_a7, memSize, hipMemcpyDeviceToDevice, queue));
-    HIP_CHECK(hipMemcpyAsync(d_a9, d_a8, memSize, hipMemcpyDeviceToDevice, queue));
-    HIP_CHECK(hipMemcpyAsync(d_a10, d_a9, memSize, hipMemcpyDeviceToDevice, queue));
+    HIP_CHECK(hipMemcpyAsync(d_a2, d_a1, memSize, hipMemcpyDeviceToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(d_a3, d_a2, memSize, hipMemcpyDeviceToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(d_a4, d_a3, memSize, hipMemcpyDeviceToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(d_a5, d_a4, memSize, hipMemcpyDeviceToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(d_a6, d_a5, memSize, hipMemcpyDeviceToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(d_a7, d_a6, memSize, hipMemcpyDeviceToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(d_a8, d_a7, memSize, hipMemcpyDeviceToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(d_a9, d_a8, memSize, hipMemcpyDeviceToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(d_a10, d_a9, memSize, hipMemcpyDeviceToDevice, stream));
 
     // Single kernel launch after all memcpys
-    hipLaunchKernelGGL(add_arrays, dim3(blocksPerGrid), dim3(threadsPerBlock), 0, queue,
+    hipLaunchKernelGGL(add_arrays, dim3(blocksPerGrid), dim3(threadsPerBlock), 0, stream,
                        d_a1, d_a2, d_a3, d_a4, d_a5,
                        d_a6, d_a7, d_a8, d_a9, d_a10,
                        d_result, N);
     HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
 
     // Device to host memory copy asynchronously
-    HIP_CHECK(hipMemcpyAsync(h_result, d_result, memSize, hipMemcpyDeviceToHost, queue));
+    HIP_CHECK(hipMemcpyAsync(h_result, d_result, memSize, hipMemcpyDeviceToHost, stream));
 
     // End capturing the stream to create the HIP graph
-    HIP_CHECK(hipStreamEndCapture(queue, &graph));
+    HIP_CHECK(hipStreamEndCapture(stream, &graph));
 
     // Instantiate the graph
     hipGraphExec_t graphExec;
     HIP_CHECK(hipGraphInstantiate(&graphExec, graph, NULL, NULL, 0));
 
     // End Timer for first run / graph creation
-    HIP_CHECK(hipEventRecord(stop, queue));
+    HIP_CHECK(hipEventRecord(stop, stream));
     HIP_CHECK(hipEventSynchronize(stop));
     HIP_CHECK(hipEventElapsedTime(&graphCreateTime, start, stop));
 
     for (int istep = 0; istep < NSTEP - 1; istep++) {
         // Start Timer for each run
-        HIP_CHECK(hipEventRecord(start, queue));
+        HIP_CHECK(hipEventRecord(start, stream));
 
         // Launch the graph
-        HIP_CHECK(hipGraphLaunch(graphExec, queue));
+        HIP_CHECK(hipGraphLaunch(graphExec, stream));
         // Wait for the graph execution to finish
-        HIP_CHECK(hipStreamSynchronize(queue));
+        HIP_CHECK(hipStreamSynchronize(stream));
 
         // End Timer for each run
-        HIP_CHECK(hipEventRecord(stop, queue));
+        HIP_CHECK(hipEventRecord(stop, stream));
         HIP_CHECK(hipEventSynchronize(stop));
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop));
 
@@ -150,7 +150,10 @@ int main()
             if (elapsedTime > upperTime) {
                 upperTime = elapsedTime;
             }
-            if (elapsedTime < lowerTime || lowerTime == 0.0f) {
+            if (elapsedTime < lowerTime) {
+                lowerTime = elapsedTime;
+            }
+            if (istep == skipBy) {
                 lowerTime = elapsedTime;
             }
         }
@@ -183,7 +186,7 @@ int main()
     HIP_CHECK(hipGraphExecDestroy(graphExec));
 
     // Destroy the HIP stream
-    HIP_CHECK(hipStreamDestroy(queue));
+    HIP_CHECK(hipStreamDestroy(stream));
 
     // Destroy the events
     HIP_CHECK(hipEventDestroy(start));
