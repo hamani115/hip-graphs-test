@@ -33,7 +33,7 @@ This repository contains tests and examples for HIP Graphs. HIP Graphs provide a
     ```sh
     ./graph_matrix multiply
     ```
-### Code Variables for Testing
+### Variables for Testing
 
 1. multi-kernel-test
     - modify `skipBy` value to change the number of graph launches time excluded from "Time Spread" at the start (`default` 0 skips).
