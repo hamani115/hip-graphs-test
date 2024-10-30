@@ -5,7 +5,7 @@
 #include <hip/hip_runtime.h>
 
 // local header
-#include "../hip_check.h"
+#include "../check_hip.h"
 
 #define N (1 << 12)  // Size of the arrays - 4096
 #define NSTEP 10000  // Number of steps

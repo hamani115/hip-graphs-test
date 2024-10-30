@@ -8,7 +8,7 @@
 #include <hip/hip_runtime.h>
 
 // Local headers
-#include "../hip_check.h"
+#include "../check_hip.h"
 
 // Here you can set the device ID
 #define MYDEVICE 0

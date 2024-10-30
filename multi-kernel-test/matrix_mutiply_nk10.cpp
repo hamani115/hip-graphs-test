@@ -6,7 +6,7 @@
 #include <hip/hip_runtime.h>
 
 // local header
-#include "../hip_check.h"
+#include "../check_hip.h"
 
 #define N 64 //(1<<6) // Matrix dimensions (4096x4096)
 
