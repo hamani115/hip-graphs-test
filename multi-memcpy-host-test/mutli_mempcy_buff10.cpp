@@ -190,6 +190,7 @@ int main() {
     std::cout << "Average Time: " << AverageTime << "ms" << std::endl;
     std::cout << "Time Spread: " << upperTime << " - " << lowerTime << "ms" << std::endl;
     std::cout << "Total Time without first run: " << totalTime << "ms" << std::endl;
+    std::cout << "first run: " << firstTime << "ms" << std::endl;
     std::cout << "Total Time with first run: " << (totalTime + firstTime) << "ms" << std::endl;
 
     // Verify the result on the host

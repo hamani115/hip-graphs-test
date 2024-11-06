@@ -136,7 +136,7 @@ int main() {
 
     // Measure time
     // auto start = std::chrono::high_resolution_clock::now();
-    // matrixMultiplyWithGraph(d_A, d_B, d_C, N);
+    matrixMultiplyWithGraph(d_A, d_B, d_C, N);
     // auto end = std::chrono::high_resolution_clock::now();
 
     // Copy result back to host

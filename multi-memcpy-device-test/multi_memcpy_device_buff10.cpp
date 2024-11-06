@@ -13,13 +13,13 @@
 // Here you can set the device ID
 #define MYDEVICE 0
 
-#define N (1 << 12)  // 4096 elements
+#define N 4096  // 4096 elements
 #define NSTEP 10000
 
 // HIP kernel to add 10 arrays element-wise
 __global__ void add_arrays(float *a1, float *a2, float *a3, float *a4, float *a5,
                            float *a6, float *a7, float *a8, float *a9, float *a10,
-                           float *result, int N) {
+                           float *result) {
     int i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i < N) {
         result[i] = a1[i] + a2[i] + a3[i] + a4[i] + a5[i]
@@ -109,7 +109,7 @@ int main()
     hipLaunchKernelGGL(add_arrays, dim3(blocksPerGrid), dim3(threadsPerBlock), 0, stream,
                        d_a1, d_a2, d_a3, d_a4, d_a5,
                        d_a6, d_a7, d_a8, d_a9, d_a10,
-                       d_result, N);
+                       d_result);
     HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
 
     // Device to host memory copy
@@ -145,7 +145,7 @@ int main()
         hipLaunchKernelGGL(add_arrays, dim3(blocksPerGrid), dim3(threadsPerBlock), 0, stream,
                            d_a1, d_a2, d_a3, d_a4, d_a5,
                            d_a6, d_a7, d_a8, d_a9, d_a10,
-                           d_result, N);
+                           d_result);
         HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
 
         // Device to host memory copy
@@ -179,6 +179,7 @@ int main()
     std::cout << "Average Time: " << AverageTime << "ms" << std::endl;
     std::cout << "Time Spread: " << upperTime << " - " << lowerTime << "ms" << std::endl;
     std::cout << "Total Time without first run: " << totalTime << "ms" << std::endl;
+    std::cout << "first run: " << firstTime << "ms" << std::endl;
     std::cout << "Total Time with first run: " << (totalTime + firstTime) << "ms" << std::endl;
 
     // **Print h_result before testing**

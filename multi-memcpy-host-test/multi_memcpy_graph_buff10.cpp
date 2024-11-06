@@ -178,6 +178,7 @@ int main() {
     std::cout << "Average Time: " << AverageTime << "ms" << std::endl;
     std::cout << "Time Spread: " << upperTime << " - " << lowerTime << "ms" << std::endl;
     std::cout << "Total Time without Graph Creation: " << totalTime << "ms" << std::endl;
+    std::cout << "first run: " << graphCreateTime << "ms" << std::endl;
     std::cout << "Total Time with Graph Creation: " << (totalTime + graphCreateTime) << "ms" << std::endl;
 
     // Verify the result on the host
