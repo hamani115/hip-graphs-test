@@ -75,9 +75,9 @@ int main(){
     int* d_arrayB;
     // std::vector<double> h_array(arraySize);
     // double* h_array = new double[arraySize];
-    double* h_array = (double*)malloc(arraySize * sizeof(double));
-    // double* h_array = nullptr;
-    // HIP_CHECK(hipHostMalloc((void**)&h_array, arraySize * sizeof(double), hipHostMallocNumaUser));
+    // double* h_array = (double*)malloc(arraySize * sizeof(double));
+    double* h_array = nullptr;
+    HIP_CHECK(hipHostMalloc((void**)&h_array, arraySize * sizeof(double), hipHostMallocNumaUser));
     
     constexpr double initValue = 2.0;
 
@@ -104,7 +104,7 @@ int main(){
     // Needs a custom struct to pass the arguments
     // set_vector_args args{h_array, initValue};
     // HIP_CHECK(hipLaunchHostFunc(captureStream, set_vector, &args));
-     set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
+    set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
     HIP_CHECK(hipLaunchHostFunc(captureStream, set_vector, args));
 
     HIP_CHECK(hipMemcpyAsync(d_arrayA, h_array, arraySize*sizeof(double), hipMemcpyHostToDevice, captureStream));
@@ -143,12 +143,12 @@ int main(){
     HIP_CHECK(hipEventRecord(execStart, captureStream));
 
     // Launch the graph multiple times
-    constexpr int iterations = 1000;
+    constexpr int iterations = 2;
     for(int i = 0; i < iterations; ++i){
         // std::cout << "Inside loop: " << i << std::endl;
         HIP_CHECK(hipGraphLaunch(graphExec, captureStream));
-        HIP_CHECK(hipStreamSynchronize(captureStream));
     }
+    HIP_CHECK(hipStreamSynchronize(captureStream));
 
     HIP_CHECK(hipEventRecord(execStop, captureStream));
     HIP_CHECK(hipEventSynchronize(execStop));
@@ -182,7 +182,7 @@ int main(){
     HIP_CHECK(hipGraphExecDestroy(graphExec));
     HIP_CHECK(hipStreamDestroy(captureStream));
     delete args;
-    // HIP_CHECK(hipHostFree(h_array));
+    HIP_CHECK(hipHostFree(h_array));
 
     return 0;
 }

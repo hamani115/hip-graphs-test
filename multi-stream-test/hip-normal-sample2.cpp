@@ -96,7 +96,7 @@ int main(){
     HIP_CHECK(hipEventRecord(execStart, stream));
 
     // Execute the sequence multiple times
-    constexpr int iterations = 1000;
+    constexpr int iterations = 2;
     for(int i = 0; i < iterations; ++i){
         // Allocate device memory
         HIP_CHECK(hipMalloc(&d_arrayA, arraySize * sizeof(double)));
@@ -123,6 +123,7 @@ int main(){
         HIP_CHECK(hipFree(d_arrayA));
         HIP_CHECK(hipFree(d_arrayB));
     }
+    // HIP_CHECK(hipStreamSynchronize(stream));
 
     HIP_CHECK(hipEventRecord(execStop, stream));
     HIP_CHECK(hipEventSynchronize(execStop));
