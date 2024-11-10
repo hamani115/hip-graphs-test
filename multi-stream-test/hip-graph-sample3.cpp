@@ -136,11 +136,11 @@ int main(){
 
     // Now measure the execution time separately
     hipEvent_t execStart, execStop;
-    float elapsedTime = 0.0f;
+    // float elapsedTime = 0.0f;
     HIP_CHECK(hipEventCreate(&execStart));
     HIP_CHECK(hipEventCreate(&execStop));
     float elapsedTime = 0.0f;
-    float graphCreateTime = 0.0f;
+    // float graphCreateTime = 0.0f;
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
@@ -159,6 +159,7 @@ int main(){
         HIP_CHECK(hipEventRecord(execStart, captureStream));
 
         HIP_CHECK(hipGraphLaunch(graphExec, captureStream));
+        HIP_CHECK(hipStreamSynchronize(captureStream));
         
         HIP_CHECK(hipEventRecord(execStop, captureStream));
         HIP_CHECK(hipEventSynchronize(execStop));
@@ -189,7 +190,7 @@ int main(){
         }
     }
     
-    HIP_CHECK(hipStreamSynchronize(captureStream));
+    // HIP_CHECK(hipStreamSynchronize(captureStream));
 
     // HIP_CHECK(hipEventRecord(execStop, captureStream));
     // HIP_CHECK(hipEventSynchronize(execStop));
@@ -209,7 +210,8 @@ int main(){
 
     // Print out the time statistics
     std::cout << "New Measurements: " << std::endl;
-    std::cout << "Average Time: " << meanTime << " ms" << std::endl;
+    std::cout << "Average Time with Graph: " << meanTime << " ms" << std::endl;
+    std::cout << "Average Time without Graph: " << (totalTime) / (iterations - 1 - skipBy) << " ms" << std::endl;
     std::cout << "Variance: " << varianceTime3 << " ms" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime3 << " ms" << std::endl;
     std::cout << "Time Spread: " << upperTime << " - " << lowerTime << " ms" << std::endl;
@@ -219,9 +221,9 @@ int main(){
     std::cout << "Old measurements: " << std::endl;
     std::cout << "Graph Creation Time: " << graphCreateTime << "ms" << std::endl;
     std::cout << "Iterations: " << iterations << std::endl;
-    std::cout << "Average Execution Time per Iteration without graph: " << (execTime / iterations-1) << "ms" << std::endl;
-    std::cout << "Total Time: " << graphCreateTime + execTime << "ms" << std::endl;
-    std::cout << "Average Execution Time per Iteration with graph: " << ((execTime + graphCreateTime) / (iterations)) << "ms" << std::endl;
+    // std::cout << "Average Execution Time per Iteration without graph: " << (execTime / iterations-1) << "ms" << std::endl;
+    // std::cout << "Total Time: " << graphCreateTime + execTime << "ms" << std::endl;
+    // std::cout << "Average Execution Time per Iteration with graph: " << ((execTime + graphCreateTime) / (iterations)) << "ms" << std::endl;
 
     // Verify results
     constexpr double expected = initValue * 2.0 + 3;
