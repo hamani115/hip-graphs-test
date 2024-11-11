@@ -71,12 +71,7 @@ int main() {
 
     // Set Timer
     hipEvent_t start, stop;
-    float elapsedTime = 0.0f;
     float graphCreateTime = 0.0f;
-    float totalTime = 0.0f;
-    float upperTime = 0.0f;
-    float lowerTime = 0.0f;
-    int skipBy = 100;
     HIP_CHECK(hipEventCreate(&start));
     HIP_CHECK(hipEventCreate(&stop));
 
@@ -128,6 +123,16 @@ int main() {
     HIP_CHECK(hipEventSynchronize(stop));
     HIP_CHECK(hipEventElapsedTime(&graphCreateTime, start, stop));
 
+    float elapsedTime = 0.0f;
+    float totalTime = 0.0f;
+    float upperTime = 0.0f;
+    float lowerTime = 0.0f;
+    int skipBy = 100;
+    // Variables for Welford's algorithm
+    double mean = 0.0;
+    double M2 = 0.0;
+    int count = 0;
+
     for (int istep = 0; istep < NSTEP - 1; istep++) {
         // Modifying buffers
         for (int i = 0; i < N; i++) {
@@ -159,6 +164,14 @@ int main() {
         // Calculate total time and spread
         if (istep >= skipBy) {
             totalTime += elapsedTime;
+
+            // Welford's algorithm for calculating mean and variance
+            count++;
+            double delta = elapsedTime - mean;
+            mean += delta / count;
+            double delta2 = elapsedTime - mean;
+            M2 += delta * delta2;
+
             if (elapsedTime > upperTime) {
                 upperTime = elapsedTime;
             }
@@ -173,14 +186,35 @@ int main() {
         // std::cout << "Elapsed time " << istep << ": " << elapsedTime << "ms" << std::endl;
     }
 
-    // Time Calculations
-    float AverageTime = (totalTime + graphCreateTime) / (NSTEP - skipBy);
-    std::cout << "Average Time: " << AverageTime << "ms" << std::endl;
-    std::cout << "Time Spread: " << upperTime << " - " << lowerTime << "ms" << std::endl;
-    std::cout << "Total Time without Graph Creation: " << totalTime << "ms" << std::endl;
-    std::cout << "first run: " << graphCreateTime << "ms" << std::endl;
-    std::cout << "Total Time with Graph Creation: " << (totalTime + graphCreateTime) << "ms" << std::endl;
+    // Calculate mean and standard deviation
+    float meanTime = (totalTime + graphCreateTime) / (NSTEP - skipBy);
+    double varianceTime = 0.0;
+    if (count > 1) {
+        varianceTime = M2 / (count - 1);
+    }
+    // Ensure variance is not negative due to floating-point errors
+    if (varianceTime < 0.0) {
+        varianceTime = 0.0;
+    }
+    double stdDevTime = sqrt(varianceTime);
 
+    // Print out the time statistics
+    std::cout << "=======Setup=======" << std::endl;
+    std::cout << "Iterations: " << NSTEP << std::endl;
+    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Kernels: " << 1 << std::endl;
+    std::cout << "Block Size: " << threadsPerBlock << std::endl;
+    std::cout << "Grid Size: " << blocksPerGrid << std::endl;
+    std::cout << "Array Size: " << N << std::endl;
+    std::cout << "=======Results=======" << std::endl;
+    std::cout << "Graph Creation Time: " << graphCreateTime << "ms" << std::endl;
+    std::cout << "Average Time with Graph: " << meanTime << " ms" << std::endl;
+    std::cout << "Average Time without Graph: " << (totalTime) / (iterations - 1 - skipBy) << " ms" << std::endl;
+    std::cout << "Variance: " << varianceTime << " ms" << std::endl;
+    std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
+    std::cout << "Time Spread: " << upperTime << " - " << lowerTime << " ms" << std::endl;
+    std::cout << "Total Time without Graph Creation: " << totalTime << " ms" << std::endl;
+    std::cout << "Total Time with Graph Creation: " << totalTime + graphCreateTime << " ms" << std::endl;
     // Verify the result on the host
     int correct = 1;
     for (int i = 0; i < N; i++) {

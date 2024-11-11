@@ -92,8 +92,8 @@ int main(){
     // float elapsedTime = 0.0f;
     HIP_CHECK(hipEventCreate(&execStart));
     HIP_CHECK(hipEventCreate(&execStop));
+
     float elapsedTime = 0.0f;
-    // float graphCreateTime = 0.0f;
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
@@ -170,33 +170,41 @@ int main(){
 
     // Calculate mean and standard deviation
     float meanTime = (totalTime + firstCreateTime) / (iterations - skipBy);
-    double varianceTime3 = 0.0;
+    double varianceTime = 0.0;
     if (count > 1) {
-        varianceTime3 = M2 / (count - 1);
+        varianceTime = M2 / (count - 1);
     }
     // Ensure variance is not negative due to floating-point errors
-    if (varianceTime3 < 0.0) {
-        varianceTime3 = 0.0;
+    if (varianceTime < 0.0) {
+        varianceTime = 0.0;
     }
-    double stdDevTime3 = sqrt(varianceTime3);
+    double stdDevTime = sqrt(varianceTime);
 
-    std::cout << "New Measurements: " << std::endl;
-    std::cout << "Average Time with Graph: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without Graph: " << (totalTime) / (iterations - 1 - skipBy)  << " ms" << std::endl;
-    std::cout << "Variance: " << varianceTime3 << " ms" << std::endl;
-    std::cout << "Standard Deviation: " << stdDevTime3 << " ms" << std::endl;
-    std::cout << "Time Spread: " << upperTime << " - " << lowerTime << " ms" << std::endl;
-    std::cout << "Total Time without Graph Creation: " << totalTime << " ms" << std::endl;
-    std::cout << "Total Time with Graph Creation: " << totalTime + firstCreateTime << " ms" << std::endl;
-
-    std::cout << "Old measurements: " << std::endl;
-    std::cout << "First Run: " << firstCreateTime << std::endl;
+    // Print out the time statistics
+    std::cout << "=======Setup=======" << std::endl;
     std::cout << "Iterations: " << iterations << std::endl;
-    // std::cout << "Average Execution Time per Iteration without firstRun: " << (execTime / (iterations-1)) << "ms" << std::endl;
-    // std::cout << "Total Time with firstRun: " << execTime + firstCreateTime << "ms" << std::endl;
+    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Kernel: " << "kernelA, kernelB, kernelC" << std::endl;
+    std::cout << "Number of Blocks: " << numOfBlocks << std::endl;
+    std::cout << "Threads per Block: " << threadsPerBlock << std::endl;
+    std::cout << "Array Size: " << arraySize << std::endl;
+    std::cout << "=======Results=======" << std::endl;
+    std::cout << "First Run: " << firstCreateTime << std::endl;
+    std::cout << "Average Time with firstRun: " << meanTime << " ms" << std::endl;
+    std::cout << "Average Time without firstRun: " << (totalTime / (NSTEP - skipBy)) << " ms" << std::endl;
+    std::cout << "Variance: " <<  varianceTime << " ms" << std::endl;
+    std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
+    std::cout << "Time Spread: " << upperTime << " - " << lowerTime << " ms" << std::endl;
+    std::cout << "Total Time without firstRun: " << totalTime << " ms" << std::endl;
+    std::cout << "Total Time with firstRun: " << totalTime + firstCreateTime << " ms" << std::endl;
+
+    // std::cout << "Old measurements: " << std::endl;
+    // std::cout << "First Run: " << firstCreateTime << std::endl;
+    // std::cout << "Iterations: " << iterations << std::endl;
+    // s::cout << "Average Execution Time per Iteration without firstRun: " << (execTime / (iterations-1)) << "ms" << std::endl;
+    // stdtd::cout << "Total Time with firstRun: " << execTime + firstCreateTime << "ms" << std::endl;
     // std::cout << "New Average Execution Time per Iteration with firstRun: " <<  ((execTime + firstCreateTime) / (iterations)) << std::endl;
 
-    // ... [Verify results and clean up]
     // Verify results
     constexpr double expected = initValue * 2.0 + 3;
     bool passed = true;

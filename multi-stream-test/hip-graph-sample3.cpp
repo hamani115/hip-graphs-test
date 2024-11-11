@@ -198,18 +198,26 @@ int main(){
 
     // Calculate mean and standard deviation
     float meanTime = (totalTime + graphCreateTime) / (iterations - skipBy);
-    double varianceTime3 = 0.0;
+    double varianceTime = 0.0;
     if (count > 1) {
-        varianceTime3 = M2 / (count - 1);
+        varianceTime = M2 / (count - 1);
     }
     // Ensure variance is not negative due to floating-point errors
-    if (varianceTime3 < 0.0) {
-        varianceTime3 = 0.0;
+    if (varianceTime < 0.0) {
+        varianceTime = 0.0;
     }
-    double stdDevTime3 = sqrt(varianceTime3);
+    double stdDevTime = sqrt(varianceTime);
 
     // Print out the time statistics
-    std::cout << "New Measurements: " << std::endl;
+    std::cout << "=======Setup=======" << std::endl;
+    std::cout << "Iterations: " << iterations << std::endl;
+    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Kernel: " << "kernelA, kernelB, kernelC" << std::endl;
+    std::cout << "Number of Blocks: " << numOfBlocks << std::endl;
+    std::cout << "Threads per Block: " << threadsPerBlock << std::endl;
+    std::cout << "Array Size: " << arraySize << std::endl;
+    std::cout << "=======Results=======" << std::endl;
+    std::cout << "Graph Creation Time: " << graphCreateTime << "ms" << std::endl;
     std::cout << "Average Time with Graph: " << meanTime << " ms" << std::endl;
     std::cout << "Average Time without Graph: " << (totalTime) / (iterations - 1 - skipBy) << " ms" << std::endl;
     std::cout << "Variance: " << varianceTime3 << " ms" << std::endl;
@@ -218,9 +226,9 @@ int main(){
     std::cout << "Total Time without Graph Creation: " << totalTime << " ms" << std::endl;
     std::cout << "Total Time with Graph Creation: " << totalTime + graphCreateTime << " ms" << std::endl;
 
-    std::cout << "Old measurements: " << std::endl;
-    std::cout << "Graph Creation Time: " << graphCreateTime << "ms" << std::endl;
-    std::cout << "Iterations: " << iterations << std::endl;
+    // std::cout << "Old measurements: " << std::endl;
+    // std::cout << "Graph Creation Time: " << graphCreateTime << "ms" << std::endl;
+    // std::cout << "Iterations: " << iterations << std::endl;
     // std::cout << "Average Execution Time per Iteration without graph: " << (execTime / iterations-1) << "ms" << std::endl;
     // std::cout << "Total Time: " << graphCreateTime + execTime << "ms" << std::endl;
     // std::cout << "Average Execution Time per Iteration with graph: " << ((execTime + graphCreateTime) / (iterations)) << "ms" << std::endl;
