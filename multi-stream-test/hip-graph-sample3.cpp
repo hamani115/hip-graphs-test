@@ -64,7 +64,7 @@ void set_vector(void* args) {
 int main(){
     constexpr int numOfBlocks = 1024;
     constexpr int threadsPerBlock = 1024;
-    constexpr size_t arraySize = 1U << 20;
+    constexpr size_t arraySize = 1U << 20; // 1,048,576 elements
 
     // This example assumes that kernelA operates on data that needs to be initialized on
     // and copied from the host, while kernelB initializes the array that is passed to it.
@@ -136,7 +136,7 @@ int main(){
 
     // Now measure the execution time separately
     hipEvent_t execStart, execStop;
-    // float elapsedTime = 0.0f;
+    // float execTime = 0.0f;
     HIP_CHECK(hipEventCreate(&execStart));
     HIP_CHECK(hipEventCreate(&execStop));
     float elapsedTime = 0.0f;
