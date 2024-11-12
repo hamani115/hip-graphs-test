@@ -136,7 +136,7 @@ void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     std::cout << "=======Results=======" << std::endl;
     std::cout << "Graph Creation: " << graphCreateTime << std::endl;
     std::cout << "Average Time with Graph: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without Graph: " << (totalTime / (NSTEP - skipBy)) << " ms" << std::endl;
+    std::cout << "Average Time without Graph: " << (totalTime / (NSTEP - 1 - skipBy)) << " ms" << std::endl;
     std::cout << "Variance: " <<  varianceTime << " ms" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
     std::cout << "Time Spread: " << upperTime << " - " << lowerTime << " ms" << std::endl;

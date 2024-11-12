@@ -191,7 +191,7 @@ int main(){
     std::cout << "=======Results=======" << std::endl;
     std::cout << "First Run: " << firstCreateTime << std::endl;
     std::cout << "Average Time with firstRun: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without firstRun: " << (totalTime / (NSTEP - skipBy)) << " ms" << std::endl;
+    std::cout << "Average Time without firstRun: " << (totalTime / (iterations - 1 - skipBy)) << " ms" << std::endl;
     std::cout << "Variance: " <<  varianceTime << " ms" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
     std::cout << "Time Spread: " << upperTime << " - " << lowerTime << " ms" << std::endl;
