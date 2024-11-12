@@ -74,17 +74,17 @@ int main()
     int threadsPerBlock = 256;
     int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
 
-    // Create HIP events for timings
-    hipEvent_t start, stop;
+    // Set Timer for first run
+    hipEvent_t firstCreateStart, firstCreateStop;
     float firstTime = 0.0f;
-    HIP_CHECK(hipEventCreate(&start));
-    HIP_CHECK(hipEventCreate(&stop));
+    HIP_CHECK(hipEventCreate(&firstCreateStart));
+    HIP_CHECK(hipEventCreate(&firstCreateStop));
 
     // Host to device memory copy
     HIP_CHECK(hipMemcpyAsync(d_a1, h_a, memSize, hipMemcpyHostToDevice, stream));
 
     // Start Timer
-    HIP_CHECK(hipEventRecord(start, stream));
+    HIP_CHECK(hipEventRecord(firstCreateStart, stream));
 
     // Reset d_result to zero
     HIP_CHECK(hipMemsetAsync(d_result, 0, memSize, stream));
@@ -114,9 +114,14 @@ int main()
     HIP_CHECK(hipStreamSynchronize(stream));
 
     // End Timer
-    HIP_CHECK(hipEventRecord(stop, stream));
-    HIP_CHECK(hipEventSynchronize(stop));
-    HIP_CHECK(hipEventElapsedTime(&firstTime, start, stop));
+    HIP_CHECK(hipEventRecord(firstCreateStop, stream));
+    HIP_CHECK(hipEventSynchronize(firstCreateStop));
+    HIP_CHECK(hipEventElapsedTime(&firstTime, firstCreateStart, firstCreateStop));
+
+    // Measure execution time
+    hipEvent_t execStart, execStop;
+    HIP_CHECK(hipEventCreate(&execStart));
+    HIP_CHECK(hipEventCreate(&execStop));
 
     float elapsedTime = 0.0f;
     float totalTime = 0.0f;
@@ -130,7 +135,7 @@ int main()
 
     for (int istep = 0; istep < NSTEP - 1; istep++) {
         // Start Timer for each run
-        HIP_CHECK(hipEventRecord(start, stream));
+        HIP_CHECK(hipEventRecord(execStart, stream));
 
         // Reset d_result to zero
         HIP_CHECK(hipMemsetAsync(d_result, 0, memSize, stream));
@@ -160,9 +165,9 @@ int main()
         HIP_CHECK(hipStreamSynchronize(stream));
 
         // End Timer for each run
-        HIP_CHECK(hipEventRecord(stop, stream));
-        HIP_CHECK(hipEventSynchronize(stop));
-        HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop));
+        HIP_CHECK(hipEventRecord(execStop, stream));
+        HIP_CHECK(hipEventSynchronize(execStop));
+        HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));
 
         // Time calculations
         if (istep >= skipBy) {
@@ -233,11 +238,11 @@ int main()
     }
 
     // Destroy the HIP stream
+    HIP_CHECK(hipEventDestroy(execStart));
+    HIP_CHECK(hipEventDestroy(execStop));
+    HIP_CHECK(hipEventDestroy(firstCreateStart));
+    HIP_CHECK(hipEventDestroy(firstCreateStop));
     HIP_CHECK(hipStreamDestroy(stream));
-
-    // Destroy the events
-    HIP_CHECK(hipEventDestroy(start));
-    HIP_CHECK(hipEventDestroy(stop));
 
     // Free pinned host memory
     HIP_CHECK(hipHostFree(h_a));

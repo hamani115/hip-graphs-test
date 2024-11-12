@@ -44,7 +44,7 @@ int main(){
     std::vector<double> h_array(arraySize);
     constexpr double initValue = 2.0;
 
-    // Set Timer for graph creation
+    // Set Timer for first run
     hipEvent_t firstCreateStart, firstCreateStop;
     float firstCreateTime = 0.0f;
     HIP_CHECK(hipEventCreate(&firstCreateStart));
@@ -89,7 +89,6 @@ int main(){
 
     // Measure execution time
     hipEvent_t execStart, execStop;
-    // float elapsedTime = 0.0f;
     HIP_CHECK(hipEventCreate(&execStart));
     HIP_CHECK(hipEventCreate(&execStop));
 

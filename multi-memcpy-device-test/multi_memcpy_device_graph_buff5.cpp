@@ -73,20 +73,21 @@ int main()
     int threadsPerBlock = 256;
     int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
 
-    // Set Timer variables
-    hipEvent_t start, stop;
+    // Set Timer for graph creation
+    hipGraph_t graph;
+    hipGraphExec_t graphExec;
+    hipEvent_t graphCreateStart, graphCreateStop;
     float graphCreateTime = 0.0f;
-    HIP_CHECK(hipEventCreate(&start));
-    HIP_CHECK(hipEventCreate(&stop));
+    HIP_CHECK(hipEventCreate(&graphCreateStart));
+    HIP_CHECK(hipEventCreate(&graphCreateStop));
 
     // Host to device memory copy asynchronously
     HIP_CHECK(hipMemcpyAsync(d_a1, h_a, memSize, hipMemcpyHostToDevice, stream));
 
     // Start Timer for first run / graph Creation
-    HIP_CHECK(hipEventRecord(start, stream));
+    HIP_CHECK(hipEventRecord(graphCreateStart, stream));
 
     // BEGIN capturing the stream to create the HIP graph
-    hipGraph_t graph;
     HIP_CHECK(hipStreamBeginCapture(stream, hipStreamCaptureModeGlobal));
 
     // Reset d_result to zero
@@ -117,13 +118,19 @@ int main()
     HIP_CHECK(hipStreamEndCapture(stream, &graph));
 
     // Instantiate the graph
-    hipGraphExec_t graphExec;
     HIP_CHECK(hipGraphInstantiate(&graphExec, graph, NULL, NULL, 0));
 
+    HIP_CHECK(hipGraphDestroy(graph));
+
     // End Timer for first run / graph creation
-    HIP_CHECK(hipEventRecord(stop, stream));
-    HIP_CHECK(hipEventSynchronize(stop));
-    HIP_CHECK(hipEventElapsedTime(&graphCreateTime, start, stop));
+    HIP_CHECK(hipEventRecord(graphCreateStop, stream));
+    HIP_CHECK(hipEventSynchronize(graphCreateStop));
+    HIP_CHECK(hipEventElapsedTime(&graphCreateTime, graphCreateStart, graphCreateStop));
+
+    // Measure the execution time separately
+    hipEvent_t execStart, execStop;
+    HIP_CHECK(hipEventCreate(&execStart));
+    HIP_CHECK(hipEventCreate(&execStop));
 
     float elapsedTime = 0.0f;
     float totalTime = 0.0f;
@@ -137,7 +144,7 @@ int main()
 
     for (int istep = 0; istep < NSTEP - 1; istep++) {
         // Start Timer for each run
-        HIP_CHECK(hipEventRecord(start, stream));
+        HIP_CHECK(hipEventRecord(execStart, stream));
 
         // Launch the graph
         HIP_CHECK(hipGraphLaunch(graphExec, stream));
@@ -145,9 +152,9 @@ int main()
         HIP_CHECK(hipStreamSynchronize(stream));
 
         // End Timer for each run
-        HIP_CHECK(hipEventRecord(stop, stream));
-        HIP_CHECK(hipEventSynchronize(stop));
-        HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop));
+        HIP_CHECK(hipEventRecord(execStop, stream));
+        HIP_CHECK(hipEventSynchronize(execStop));
+        HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));
 
         // Time calculations
         if (istep >= skipBy) {
@@ -218,15 +225,15 @@ int main()
     }
 
     // Destroy the graph and exec object
-    HIP_CHECK(hipGraphDestroy(graph));
+    // HIP_CHECK(hipGraphDestroy(graph));
+    HIP_CHECK(hipEventDestroy(execStart));
+    HIP_CHECK(hipEventDestroy(execStop));
+    HIP_CHECK(hipEventDestroy(graphCreateStart));
+    HIP_CHECK(hipEventDestroy(graphCreateStop));
     HIP_CHECK(hipGraphExecDestroy(graphExec));
 
     // Destroy the HIP stream
     HIP_CHECK(hipStreamDestroy(stream));
-
-    // Destroy the events
-    HIP_CHECK(hipEventDestroy(start));
-    HIP_CHECK(hipEventDestroy(stop));
 
     // Free pinned host memory
     HIP_CHECK(hipHostFree(h_a));

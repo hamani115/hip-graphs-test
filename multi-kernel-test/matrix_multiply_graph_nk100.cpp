@@ -39,13 +39,13 @@ void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     // Create the HIP graph
     hipGraph_t graph;
     hipGraphExec_t graphExec;
-    hipEvent_t start, stop;
+    hipEvent_t graphCreateStart, graphCreateStop;
     float graphCreateTime = 0.0f;
-    HIP_CHECK(hipEventCreate(&start)); 
-    HIP_CHECK(hipEventCreate(&stop)); 
+    HIP_CHECK(hipEventCreate(&graphCreateStart)); 
+    HIP_CHECK(hipEventCreate(&graphCreateStop)); 
 
     // Start the timer for the graph creation
-    HIP_CHECK(hipEventRecord(start, stream));
+    HIP_CHECK(hipEventRecord(graphCreateStart, stream));
 
     // Begin graph capture
     HIP_CHECK(hipStreamBeginCapture(stream, hipStreamCaptureModeGlobal));
@@ -57,13 +57,19 @@ void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
     
     // End graph capture 
-    HIP_CHECK(hipStreamEndCapture(stream, &graph));
+    HIP_CHECK(hipStreamEndCapture(stream, &graph));4
     HIP_CHECK(hipGraphInstantiate(&graphExec, graph, NULL, NULL, 0));
+
+    HIP_CHECK(hipGraphDestroy(graph));
     
     // Stop the timer for the graph creation
-    HIP_CHECK(hipEventRecord(stop, stream));
-    HIP_CHECK(hipEventSynchronize(stop)); 
-    HIP_CHECK(hipEventElapsedTime(&graphCreateTime, start, stop)); 
+    HIP_CHECK(hipEventRecord(graphCreateStop, stream));
+    HIP_CHECK(hipEventSynchronize(graphCreateStop)); 
+    HIP_CHECK(hipEventElapsedTime(&graphCreateTime, graphCreateStart, graphCreateStop)); 
+
+    hipEvent_t execStart, execStop;
+    HIP_CHECK(hipEventCreate(&execStart));
+    HIP_CHECK(hipEventCreate(&execStop));
 
     float elapsedTime = 0.0f;
     float totalTime = 0.0f;
@@ -78,16 +84,16 @@ void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     // Launch the graph NSTEP times
     for (int i = 0; i < NSTEP - 1; i++) {
         // Start the timer for each runs
-        HIP_CHECK(hipEventRecord(start, stream));  
+        HIP_CHECK(hipEventRecord(execStart, stream));  
         
         // Launch the graph
         HIP_CHECK(hipGraphLaunch(graphExec, stream));
         HIP_CHECK(hipStreamSynchronize(stream)); // Ensure all kernels finish
 
         // Stop the timer for each runs
-        HIP_CHECK(hipEventRecord(stop, stream));
-        HIP_CHECK(hipEventSynchronize(stop)); 
-        HIP_CHECK(hipEventElapsedTime(&elapsedTime, start, stop));  
+        HIP_CHECK(hipEventRecord(execStop, stream));
+        HIP_CHECK(hipEventSynchronize(execStop)); 
+        HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));  
         
         // Calculate the total time and the time spread
         if(i >= skipBy){
@@ -144,9 +150,13 @@ void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     std::cout << "Total Time with Graph Creation: " << totalTime + graphCreateTime << " ms" << std::endl;
     
     // Cleanup
-    HIP_CHECK(hipGraphDestroy(graph));
+    // HIP_CHECK(hipGraphDestroy(graph));
     HIP_CHECK(hipGraphExecDestroy(graphExec));
     HIP_CHECK(hipStreamDestroy(stream));
+    HIP_CHECK(hipEventDestroy(execStart));
+    HIP_CHECK(hipEventDestroy(execStop));
+    HIP_CHECK(hipEventDestroy(graphCreateStart));
+    HIP_CHECK(hipEventDestroy(graphCreateStop));
 }
 
 int main() {

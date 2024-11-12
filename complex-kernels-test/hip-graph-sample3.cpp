@@ -134,11 +134,11 @@ int main(){
     HIP_CHECK(hipEventSynchronize(graphCreateStop));
     HIP_CHECK(hipEventElapsedTime(&graphCreateTime, graphCreateStart, graphCreateStop));
 
-    // Now measure the execution time separately
+    // Measure the execution time separately
     hipEvent_t execStart, execStop;
-    // float execTime = 0.0f;
     HIP_CHECK(hipEventCreate(&execStart));
     HIP_CHECK(hipEventCreate(&execStop));
+
     float elapsedTime = 0.0f;
     // float graphCreateTime = 0.0f;
     float totalTime = 0.0f;
