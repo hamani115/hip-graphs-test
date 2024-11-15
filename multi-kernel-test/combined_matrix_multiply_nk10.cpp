@@ -3,9 +3,10 @@
 #include <hip/hip_runtime.h>
 #include "../check_hip.h"
 
-#define N 1024 // Matrix dimensions (1024x1024)
-#define NSTEP 500
+#define N 64 //1024 // Matrix dimensions (1024x1024)
+#define NSTEP 100000
 #define NKERNEL 10 // Number of kernels
+#define SKIPBY 0
 
 // HIP kernel for matrix multiplication
 __global__ void matMulKernel(float* A, float* B, float* C, int width) {
@@ -85,7 +86,7 @@ float matrixMultiplyNoGraph(int width) {
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
-    int skipBy = 0;
+    // int skipBy = 0;
     // Variables for Welford's algorithm
     double mean = 0.0;
     double M2 = 0.0;
@@ -109,7 +110,7 @@ float matrixMultiplyNoGraph(int width) {
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));
 
         // Calculate the total time and the time spread
-        if (j >= skipBy) {
+        if (j >= SKIPBY) {
             totalTime += elapsedTime;
 
             // Welford's algorithm for calculating mean and variance
@@ -125,14 +126,14 @@ float matrixMultiplyNoGraph(int width) {
             if (elapsedTime < lowerTime) {
                 lowerTime = elapsedTime;
             }
-            if (j == skipBy) {
+            if (j == SKIPBY) {
                 lowerTime = elapsedTime;
             }
         }
     }
 
     // Calculate mean and standard deviation
-    float meanTime = (totalTime + firstTime) / (NSTEP - skipBy);
+    float meanTime = (totalTime + firstTime) / (NSTEP - SKIPBY);
     double varianceTime = 0.0;
     if (count > 1) {
         varianceTime = M2 / (count - 1);
@@ -146,7 +147,7 @@ float matrixMultiplyNoGraph(int width) {
     // Print out the time statistics
     std::cout << "=======Setup (No Graph)=======" << std::endl;
     std::cout << "Iterations: " << NSTEP << std::endl;
-    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Skip By: " << SKIPBY << std::endl;
     std::cout << "Kernels: " << NKERNEL << std::endl;
     std::cout << "Block Size: " << block.x << " x " << block.y << std::endl;
     std::cout << "Grid Size: " << grid.x << " x " << grid.y << std::endl;
@@ -154,7 +155,7 @@ float matrixMultiplyNoGraph(int width) {
     std::cout << "=======Results (No Graph)=======" << std::endl;
     std::cout << "First Run: " << firstTime << " ms" << std::endl;
     std::cout << "Average Time with firstRun: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without firstRun: " << (totalTime / (NSTEP - 1 - skipBy)) << " ms" << std::endl;
+    std::cout << "Average Time without firstRun: " << (totalTime / (NSTEP - 1 - SKIPBY)) << " ms" << std::endl;
     std::cout << "Variance: " << varianceTime << " ms^2" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
     std::cout << "Time Spread: " << upperTime << " - " << lowerTime << " ms" << std::endl;
@@ -248,7 +249,7 @@ float matrixMultiplyWithGraph(int width) {
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
-    int skipBy = 0;
+    // int skipBy = 0;
     // Variables for Welford's algorithm
     double mean = 0.0;
     double M2 = 0.0;
@@ -269,7 +270,7 @@ float matrixMultiplyWithGraph(int width) {
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));
 
         // Calculate the total time and the time spread
-        if (i >= skipBy) {
+        if (i >= SKIPBY) {
             totalTime += elapsedTime;
 
             // Welford's algorithm for calculating mean and variance
@@ -285,14 +286,14 @@ float matrixMultiplyWithGraph(int width) {
             if (elapsedTime < lowerTime) {
                 lowerTime = elapsedTime;
             }
-            if (i == skipBy) {
+            if (i == SKIPBY) {
                 lowerTime = elapsedTime;
             }
         }
     }
 
     //  Welford's algorithm for calculating variance
-    float meanTime = (totalTime + graphCreateTime) / (NSTEP - skipBy);
+    float meanTime = (totalTime + graphCreateTime) / (NSTEP - SKIPBY);
     double varianceTime = 0.0;
     if (count > 1) {
         varianceTime = M2 / (count - 1);
@@ -307,7 +308,7 @@ float matrixMultiplyWithGraph(int width) {
     // Print out the time statistics
     std::cout << "=======Setup (With Graph)=======" << std::endl;
     std::cout << "Iterations: " << NSTEP << std::endl;
-    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Skip By: " << SKIPBY << std::endl;
     std::cout << "Kernels: " << NKERNEL << std::endl;
     std::cout << "Block Size: " << block.x << " x " << block.y << std::endl;
     std::cout << "Grid Size: " << grid.x << " x " << grid.y << std::endl;
@@ -315,7 +316,7 @@ float matrixMultiplyWithGraph(int width) {
     std::cout << "=======Results (With Graph)=======" << std::endl;
     std::cout << "Graph Creation: " << graphCreateTime << " ms" << std::endl;
     std::cout << "Average Time with Graph: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without Graph: " << (totalTime / (NSTEP - 1 - skipBy)) << " ms" << std::endl;
+    std::cout << "Average Time without Graph: " << (totalTime / (NSTEP - 1 - SKIPBY)) << " ms" << std::endl;
     std::cout << "Variance: " << varianceTime << " ms^2" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
     std::cout << "Time Spread: " << upperTime << " - " << lowerTime << " ms" << std::endl;
@@ -355,7 +356,7 @@ int main() {
     // Print the differences
     std::cout << "=======Comparison=======" << std::endl;
     std::cout << "Difference: " << difference << " ms" << std::endl;
-    std::cout << "Difference per kernel: " << diffPerKernel << " ms" << std::endl;
+    std::cout << "Difference per kernel: " << diffPerKernel * 1000 << " μs" << std::endl;
     std::cout << "Difference percentage: " << diffPercentage << "%" << std::endl;
 
     return 0;

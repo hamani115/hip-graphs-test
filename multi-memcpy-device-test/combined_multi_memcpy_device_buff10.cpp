@@ -15,6 +15,7 @@
 
 #define N 4096  // 4096 elements
 #define NSTEP 10000
+#define SKIPBY 100
 
 // HIP kernel to add 10 arrays element-wise
 __global__ void add_arrays(float *a1, float *a2, float *a3, float *a4, float *a5,
@@ -126,7 +127,7 @@ float addArraysNoGraph() {
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
-    int skipBy = 100;
+    // int skipBy = 100;
     // Variables for Welford's algorithm
     double mean = 0.0;
     double M2 = 0.0;
@@ -169,7 +170,7 @@ float addArraysNoGraph() {
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));
 
         // Time calculations
-        if (istep >= skipBy) {
+        if (istep >= SKIPBY) {
             totalTime += elapsedTime;
 
             // Welford's algorithm for calculating mean and variance
@@ -185,14 +186,14 @@ float addArraysNoGraph() {
             if (elapsedTime < lowerTime) {
                 lowerTime = elapsedTime;
             }
-            if (istep == skipBy) {
+            if (istep == SKIPBY) {
                 lowerTime = elapsedTime;
             }
         }
     }
 
     // Calculate mean and standard deviation
-    float meanTime = (totalTime + firstTime) / (NSTEP - skipBy);
+    float meanTime = (totalTime + firstTime) / (NSTEP - SKIPBY);
     double varianceTime = 0.0;
     if (count > 1) {
         varianceTime = M2 / (count - 1);
@@ -206,7 +207,7 @@ float addArraysNoGraph() {
     // Print out the time statistics
     std::cout << "=======Setup (No Graph)=======" << std::endl;
     std::cout << "Iterations: " << NSTEP << std::endl;
-    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Skip By: " << SKIPBY << std::endl;
     std::cout << "Kernels: " << 1 << std::endl;
     std::cout << "Block Size: " << threadsPerBlock << std::endl;
     std::cout << "Grid Size: " << blocksPerGrid << std::endl;
@@ -214,7 +215,7 @@ float addArraysNoGraph() {
     std::cout << "=======Results (No Graph)=======" << std::endl;
     std::cout << "First Run: " << firstTime << " ms" << std::endl;
     std::cout << "Average Time with firstRun: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without firstRun: " << (totalTime / (NSTEP - 1 - skipBy)) << " ms" << std::endl;
+    std::cout << "Average Time without firstRun: " << (totalTime / (NSTEP - 1 - SKIPBY)) << " ms" << std::endl;
     std::cout << "Variance: " << varianceTime << " ms^2" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
     std::cout << "Time Spread: " << lowerTime << " - " << upperTime << " ms" << std::endl;
@@ -375,7 +376,7 @@ float addArraysWithGraph() {
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
-    int skipBy = 100;
+    // int skipBy = 100;
     // Variables for Welford's algorithm
     double mean = 0.0;
     double M2 = 0.0;
@@ -396,7 +397,7 @@ float addArraysWithGraph() {
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));
 
         // Time calculations
-        if (istep >= skipBy) {
+        if (istep >= SKIPBY) {
             totalTime += elapsedTime;
 
             // Welford's algorithm for calculating mean and variance
@@ -412,14 +413,14 @@ float addArraysWithGraph() {
             if (elapsedTime < lowerTime) {
                 lowerTime = elapsedTime;
             }
-            if (istep == skipBy) {
+            if (istep == SKIPBY) {
                 lowerTime = elapsedTime;
             }
         }
     }
 
     // Calculate mean and standard deviation
-    float meanTime = (totalTime + graphCreateTime) / (NSTEP - skipBy);
+    float meanTime = (totalTime + graphCreateTime) / (NSTEP - SKIPBY);
     double varianceTime = 0.0;
     if (count > 1) {
         varianceTime = M2 / (count - 1);
@@ -433,7 +434,7 @@ float addArraysWithGraph() {
     // Print out the time statistics
     std::cout << "=======Setup (With Graph)=======" << std::endl;
     std::cout << "Iterations: " << NSTEP << std::endl;
-    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Skip By: " << SKIPBY << std::endl;
     std::cout << "Kernels: " << 1 << std::endl;
     std::cout << "Block Size: " << threadsPerBlock << std::endl;
     std::cout << "Grid Size: " << blocksPerGrid << std::endl;
@@ -441,7 +442,7 @@ float addArraysWithGraph() {
     std::cout << "=======Results (With Graph)=======" << std::endl;
     std::cout << "Graph Creation Time: " << graphCreateTime << " ms" << std::endl;
     std::cout << "Average Time with Graph: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without Graph: " << (totalTime / (NSTEP - 1 - skipBy)) << " ms" << std::endl;
+    std::cout << "Average Time without Graph: " << (totalTime / (NSTEP - 1 - SKIPBY)) << " ms" << std::endl;
     std::cout << "Variance: " << varianceTime << " ms^2" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
     std::cout << "Time Spread: " << lowerTime << " - " << upperTime << " ms" << std::endl;
