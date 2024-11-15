@@ -21,9 +21,34 @@ __global__ void matMulKernel(float* A, float* B, float* C, int width) {
 }
 
 // Function for non-graph implementation
-float matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
+float matrixMultiplyNoGraph(int width) {
     dim3 block(32, 32); // 1024 threads
     dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
+
+    // Allocate host memory
+    float* h_A = (float*)malloc(width * width * sizeof(float));
+    float* h_B = (float*)malloc(width * width * sizeof(float));
+    float* h_C = (float*)malloc(width * width * sizeof(float));
+
+    // Initialize matrices using index i
+    for (int i = 0; i < width * width; i++) {
+        h_A[i] = static_cast<float>(i);
+        h_B[i] = static_cast<float>(i);
+    }
+    // for (int i = 0; i < N * N; i++) {
+    //     h_A[i] = rand() % 100;
+    //     h_B[i] = rand() % 100;
+    // }
+
+    // Allocate device memory
+    float* d_A, * d_B, * d_C;
+    HIP_CHECK(hipMalloc(&d_A, width * width * sizeof(float)));
+    HIP_CHECK(hipMalloc(&d_B, width * width * sizeof(float)));
+    HIP_CHECK(hipMalloc(&d_C, width * width * sizeof(float)));
+
+    // Copy matrices to device
+    HIP_CHECK(hipMemcpy(d_A, h_A, width * width * sizeof(float), hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(d_B, h_B, width * width * sizeof(float), hipMemcpyHostToDevice));
 
     // Create a stream
     hipStream_t stream;
@@ -40,7 +65,7 @@ float matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
 
     // Launch the kernel NKERNEL times
     for (int i = 0; i < NKERNEL; i++) {
-        hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, A, B, C, width);
+        hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, d_A, d_B, d_C, width);
     }
     HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
     // Synchronize after all kernels have been launched
@@ -73,7 +98,7 @@ float matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
 
         // Launch the kernel NKERNEL times
         for (int i = 0; i < NKERNEL; i++) {  // Run NKERNEL iterations
-            hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, A, B, C, width);
+            hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, d_A, d_B, d_C, width);
         }
         HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
         HIP_CHECK(hipStreamSynchronize(stream)); // Ensure all kernels finish
@@ -136,6 +161,9 @@ float matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
     std::cout << "Total Time without firstRun: " << totalTime << " ms" << std::endl;
     std::cout << "Total Time with firstRun: " << totalTime + firstTime << " ms" << std::endl;
 
+    // Copy result back to host
+    HIP_CHECK(hipMemcpy(h_C, d_C, width * width * sizeof(float), hipMemcpyDeviceToHost));
+
     // Clean up
     HIP_CHECK(hipEventDestroy(execStart));
     HIP_CHECK(hipEventDestroy(execStop));
@@ -143,14 +171,38 @@ float matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
     HIP_CHECK(hipEventDestroy(firstCreateStop));
     HIP_CHECK(hipStreamDestroy(stream));
 
+    free(h_A); free(h_B); free(h_C);
+    HIP_CHECK(hipFree(d_A)); HIP_CHECK(hipFree(d_B)); HIP_CHECK(hipFree(d_C));
+
     // Return the total time including the first run
     return totalTime + firstTime;
 }
 
 // Function for graph implementation
-float matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
+float matrixMultiplyWithGraph(int width) {
     dim3 block(32, 32);
     dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
+
+    // Allocate host memory
+    float* h_A = (float*)malloc(width * width * sizeof(float));
+    float* h_B = (float*)malloc(width * width * sizeof(float));
+    float* h_C = (float*)malloc(width * width * sizeof(float));
+
+    // Initialize matrices using index i
+    for (int i = 0; i < width * width; i++) {
+        h_A[i] = static_cast<float>(i);
+        h_B[i] = static_cast<float>(i);
+    }
+
+    // Allocate device memory
+    float* d_A, * d_B, * d_C;
+    HIP_CHECK(hipMalloc(&d_A, width * width * sizeof(float)));
+    HIP_CHECK(hipMalloc(&d_B, width * width * sizeof(float)));
+    HIP_CHECK(hipMalloc(&d_C, width * width * sizeof(float)));
+
+    // Copy matrices to device
+    HIP_CHECK(hipMemcpy(d_A, h_A, width * width * sizeof(float), hipMemcpyHostToDevice));
+    HIP_CHECK(hipMemcpy(d_B, h_B, width * width * sizeof(float), hipMemcpyHostToDevice));
 
     // Create a stream
     hipStream_t stream;
@@ -172,7 +224,7 @@ float matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
 
     // Launch the kernel NKERNEL times
     for (int i = 0; i < NKERNEL; i++) {  // Run NKERNEL iterations
-        hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, A, B, C, width);
+        hipLaunchKernelGGL(matMulKernel, grid, block, 0, stream, d_A, d_B, d_C, width);
     }
     HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
 
@@ -270,6 +322,9 @@ float matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     std::cout << "Total Time without Graph Creation: " << totalTime << " ms" << std::endl;
     std::cout << "Total Time with Graph Creation: " << totalTime + graphCreateTime << " ms" << std::endl;
 
+    // Copy result back to host
+    HIP_CHECK(hipMemcpy(h_C, d_C, width * width * sizeof(float), hipMemcpyDeviceToHost));
+
     // Cleanup
     HIP_CHECK(hipEventDestroy(execStart));
     HIP_CHECK(hipEventDestroy(execStop));
@@ -278,37 +333,19 @@ float matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     HIP_CHECK(hipGraphExecDestroy(graphExec));
     HIP_CHECK(hipStreamDestroy(stream));
 
+    free(h_A); free(h_B); free(h_C);
+    HIP_CHECK(hipFree(d_A)); HIP_CHECK(hipFree(d_B)); HIP_CHECK(hipFree(d_C));
+
     // Return the total time including graph creation
     return totalTime + graphCreateTime;
 }
 
 int main() {
-    // Allocate host memory
-    float* h_A = (float*)malloc(N * N * sizeof(float));
-    float* h_B = (float*)malloc(N * N * sizeof(float));
-    float* h_C = (float*)malloc(N * N * sizeof(float));
-
-    // Initialize matrices
-    for (int i = 0; i < N * N; i++) {
-        h_A[i] = rand() % 100;
-        h_B[i] = rand() % 100;
-    }
-
-    // Allocate device memory
-    float* d_A, * d_B, * d_C;
-    HIP_CHECK(hipMalloc(&d_A, N * N * sizeof(float)));
-    HIP_CHECK(hipMalloc(&d_B, N * N * sizeof(float)));
-    HIP_CHECK(hipMalloc(&d_C, N * N * sizeof(float)));
-
-    // Copy matrices to device
-    HIP_CHECK(hipMemcpy(d_A, h_A, N * N * sizeof(float), hipMemcpyHostToDevice));
-    HIP_CHECK(hipMemcpy(d_B, h_B, N * N * sizeof(float), hipMemcpyHostToDevice));
-
     // Measure time for non-graph implementation
-    float nonGraphTotalTime = matrixMultiplyNoGraph(d_A, d_B, d_C, N);
+    float nonGraphTotalTime = matrixMultiplyNoGraph(N);
 
     // Measure time for graph implementation
-    float graphTotalTime = matrixMultiplyWithGraph(d_A, d_B, d_C, N);
+    float graphTotalTime = matrixMultiplyWithGraph(N);
 
     // Compute the difference
     float difference = nonGraphTotalTime - graphTotalTime;
@@ -320,10 +357,6 @@ int main() {
     std::cout << "Difference: " << difference << " ms" << std::endl;
     std::cout << "Difference per kernel: " << diffPerKernel << " ms" << std::endl;
     std::cout << "Difference percentage: " << diffPercentage << "%" << std::endl;
-
-    // Cleanup
-    free(h_A); free(h_B); free(h_C);
-    HIP_CHECK(hipFree(d_A)); HIP_CHECK(hipFree(d_B)); HIP_CHECK(hipFree(d_C));
 
     return 0;
 }
