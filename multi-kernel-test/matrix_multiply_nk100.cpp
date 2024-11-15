@@ -8,7 +8,7 @@
 // local header
 #include "../check_hip.h"
 
-#define N 64 //(1<<6) // Matrix dimensions (4096x4096)
+#define N 64 //64 //(1<<6) // Matrix dimensions (4096x4096)
 
 #define NSTEP 100000
 #define NKERNEL 100 // INDEPENDENT VARIABLE: CHANGE THE NUMBER OF KERNELS (10 OR 100)
@@ -29,8 +29,8 @@ __global__ void matMulKernel(float* A, float* B, float* C, int width) {
 void matrixMultiplyNoGraph(float* A, float* B, float* C, int width) {
     // Setup block and grid sizes
     dim3 block(32, 32); // 1024 threads
-    // dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
-    dim3 grid(6,6); // 36 Blocks
+    dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
+    // dim3 grid(6,6); // 36 Blocks
 
     // Create a stream
     hipStream_t stream;

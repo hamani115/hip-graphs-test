@@ -29,8 +29,8 @@ __global__ void matMulKernel(float* A, float* B, float* C, int width) {
 void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     // Setup block and grid sizes
     dim3 block(32, 32);
-    // dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y); //()im
-    dim3 grid(6, 6);
+    dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y); //()im
+    // dim3 grid(6, 6);
 
     // Create a stream
     hipStream_t stream;
@@ -38,7 +38,7 @@ void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
 
     // Create the HIP graph
     hipGraph_t graph;
-    hipGraphExec_t graphExec;
+    // hipGraphExec_t graphExec;
     hipEvent_t graphCreateStart, graphCreateStop;
     float graphCreateTime = 0.0f;
     HIP_CHECK(hipEventCreate(&graphCreateStart)); 
@@ -57,7 +57,8 @@ void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     HIP_CHECK(hipGetLastError());  // Check for kernel launch errors
     
     // End graph capture 
-    HIP_CHECK(hipStreamEndCapture(stream, &graph));4
+    HIP_CHECK(hipStreamEndCapture(stream, &graph));
+    hipGraphExec_t graphExec;
     HIP_CHECK(hipGraphInstantiate(&graphExec, graph, NULL, NULL, 0));
 
     HIP_CHECK(hipGraphDestroy(graph));
@@ -75,7 +76,7 @@ void matrixMultiplyWithGraph(float* A, float* B, float* C, int width) {
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
-    int skipBy = 100;
+    int skipBy = 0;
     // Variables for Welford's algorithm
     double mean = 0.0;
     double M2 = 0.0;
