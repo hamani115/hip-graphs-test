@@ -3,23 +3,9 @@
 #include <iostream>
 #include <cmath>    // For sqrt in standard deviation calculation
 #include <cassert>  // For assert in result verification
-
+#include  "../check_hip.h"
 
 #define NSTEP 1000
-
-// HIP error checking macro
-#define HIP_CHECK(expression)                \
-{                                            \
-    const hipError_t status = expression;    \
-    if(status != hipSuccess){                \
-            std::cerr << "HIP error "        \
-                << status << ": "            \
-                << hipGetErrorString(status) \
-                << " at " << __FILE__ << ":" \
-                << __LINE__ << std::endl;    \
-            exit(EXIT_FAILURE);              \
-    }                                        \
-}
 
 // Kernel functions
 __global__ void kernelA(double* arrayA, size_t size){
@@ -35,6 +21,26 @@ __global__ void kernelB(int* arrayB, size_t size){
 __global__ void kernelC(double* arrayA, const int* arrayB, size_t size){
     const size_t x = threadIdx.x + blockDim.x * blockIdx.x;
     if(x < size){ arrayA[x] += arrayB[x]; }
+}
+
+struct set_vector_args {
+    double* h_array;
+    double value;
+    size_t size;
+};
+
+void set_vector(void* args) {
+    set_vector_args* h_args = reinterpret_cast<set_vector_args*>(args);
+    double* array = h_args->h_array;
+    size_t size = h_args->size;
+    double value = h_args->value;
+
+    // Initialize h_array with the specified value
+    for (size_t i = 0; i < size; ++i) {
+        array[i] = value;
+    }
+
+    // Do NOT delete h_args here
 }
 
 // Function for non-graph implementation
@@ -66,9 +72,12 @@ float runWithoutGraph() {
     HIP_CHECK(hipMalloc(&d_arrayB, arraySize * sizeof(int)));
 
     // Initialize host array using index i
-    for (size_t i = 0; i < arraySize; ++i) {
-        h_array[i] = static_cast<double>(i);
-    }
+    // for (size_t i = 0; i < arraySize; ++i) {
+    //     h_array[i] = static_cast<double>(i);
+    // }
+
+    // Initialize host array
+    h_array.assign(h_array.size(), initValue);
 
     // Copy h_array to device
     HIP_CHECK(hipMemcpyAsync(d_arrayA, h_array.data(), arraySize * sizeof(double), hipMemcpyHostToDevice, stream));
@@ -118,9 +127,12 @@ float runWithoutGraph() {
         HIP_CHECK(hipMalloc(&d_arrayB, arraySize * sizeof(int)));
 
         // Initialize host array using index i
-        for (size_t j = 0; j < arraySize; ++j) {
-            h_array[j] = static_cast<double>(j);
-        }
+        // for (size_t j = 0; j < arraySize; ++j) {
+        //     h_array[j] = static_cast<double>(j);
+        // }
+
+        // Initialize host array
+        h_array.assign(h_array.size(), initValue);
 
         // Copy h_array to device
         HIP_CHECK(hipMemcpyAsync(d_arrayA, h_array.data(), arraySize * sizeof(double), hipMemcpyHostToDevice, stream));
@@ -245,26 +257,28 @@ float runWithGraph() {
     HIP_CHECK(hipMallocAsync(&d_arrayB, arraySize * sizeof(int), captureStream));
 
     // Assign host function to the stream to initialize h_array
-    struct set_vector_args {
-        double* h_array;
-        double value;
-        size_t size;
-    };
+    // struct set_vector_args {
+    //     double* h_array;
+    //     double value;
+    //     size_t size;
+    // };
 
-    auto set_vector = [](void* args) {
-        set_vector_args* h_args = reinterpret_cast<set_vector_args*>(args);
-        double* array = h_args->h_array;
-        size_t size = h_args->size;
-        double value = h_args->value;
+    // auto set_vector = [](void* args) {
+    //     set_vector_args* h_args = reinterpret_cast<set_vector_args*>(args);
+    //     double* array = h_args->h_array;
+    //     size_t size = h_args->size;
+    //     double value = h_args->value;
 
-        // Initialize h_array with the specified value
-        for (size_t i = 0; i < size; ++i) {
-            array[i] = static_cast<double>(i);
-        }
-    };
+    //     // Initialize h_array with the specified value
+    //     for (size_t i = 0; i < size; ++i) {
+    //         array[i] = static_cast<double>(i);
+    //     }
+    // };
+    set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
+    HIP_CHECK(hipLaunchHostFunc(captureStream, set_vector, args));
 
-    set_vector_args args{h_array, initValue, arraySize};
-    HIP_CHECK(hipLaunchHostFunc(captureStream, set_vector, &args));
+    // set_vector_args args{h_array, initValue, arraySize};
+    // HIP_CHECK(hipLaunchHostFunc(captureStream, set_vector, &args));
 
     HIP_CHECK(hipMemcpyAsync(d_arrayA, h_array, arraySize * sizeof(double), hipMemcpyHostToDevice, captureStream));
 
