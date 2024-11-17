@@ -3,8 +3,8 @@
 #include <hip/hip_runtime.h>
 #include "../check_hip.h"
 
-#define N 64 //1024 // Matrix dimensions (1024x1024)
-#define NSTEP 100000
+#define N 1024 //64 // Matrix dimensions (1024x1024)
+#define NSTEP 10000 //100000
 #define NKERNEL 10 // Number of kernels
 #define SKIPBY 0
 
@@ -22,7 +22,7 @@ __global__ void matMulKernel(float* A, float* B, float* C, int width) {
 }
 
 // Function for non-graph implementation
-float matrixMultiplyNoGraph(int width) {
+void matrixMultiplyNoGraph(int width, float* totalTimeWith, float* totalTimeWithout) {
     dim3 block(32, 32); // 1024 threads
     dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
 
@@ -176,11 +176,13 @@ float matrixMultiplyNoGraph(int width) {
     HIP_CHECK(hipFree(d_A)); HIP_CHECK(hipFree(d_B)); HIP_CHECK(hipFree(d_C));
 
     // Return the total time including the first run
-    return totalTime + firstTime;
+    // return totalTime + firstTime;
+    *totalTimeWith = totalTime + firstTime;
+    *totalTimeWithout = totalTime;
 }
 
 // Function for graph implementation
-float matrixMultiplyWithGraph(int width) {
+void matrixMultiplyWithGraph(int width, float* totalTimeWith, float* totalTimeWithout) {
     dim3 block(32, 32);
     dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
 
@@ -338,25 +340,42 @@ float matrixMultiplyWithGraph(int width) {
     HIP_CHECK(hipFree(d_A)); HIP_CHECK(hipFree(d_B)); HIP_CHECK(hipFree(d_C));
 
     // Return the total time including graph creation
-    return totalTime + graphCreateTime;
+    // return totalTime + graphCreateTime;
+    *totalTimeWith = totalTime + graphCreateTime;
+    *totalTimeWithout = totalTime;
 }
 
 int main() {
     // Measure time for non-graph implementation
-    float nonGraphTotalTime = matrixMultiplyNoGraph(N);
+    float nonGraphTotalTime, nonGraphTotalTimeWithout;
+    // float nonGraphTotalTime = matrixMultiplyNoGraph(N);
+    matrixMultiplyNoGraph(N, &nonGraphTotalTime, &nonGraphTotalTimeWithout);
 
     // Measure time for graph implementation
-    float graphTotalTime = matrixMultiplyWithGraph(N);
+    float graphTotalTime, graphTotalTimeWithout;
+    // float graphTotalTime = matrixMultiplyWithGraph(N);
+    matrixMultiplyWithGraph(N, &graphTotalTime, &graphTotalTimeWithout);
 
-    // Compute the difference
+     // Compute the difference
     float difference = nonGraphTotalTime - graphTotalTime;
     float diffPerKernel = difference / (NSTEP * NKERNEL);
     float diffPercentage = (difference / nonGraphTotalTime) * 100;
 
+    // Compute the difference for without including Graph
+    float difference2 = nonGraphTotalTimeWithout - graphTotalTimeWithout;
+    float diffPerKernel2 = difference2 / (NSTEP-1);
+    float diffPercentage2 = (difference2 / nonGraphTotalTimeWithout) * 100;
+
+    // Print the differences
+    std::cout << "=======Comparison without Graph Creation=======" << std::endl;
+    std::cout << "Difference: " << difference2 << " ms" << std::endl;
+    std::cout << "Difference per step: " << diffPerKernel2 << " ms" << std::endl;
+    std::cout << "Difference percentage: " << diffPercentage2 << "%" << std::endl;
+
     // Print the differences
     std::cout << "=======Comparison=======" << std::endl;
     std::cout << "Difference: " << difference << " ms" << std::endl;
-    std::cout << "Difference per kernel: " << diffPerKernel * 1000 << " μs" << std::endl;
+    std::cout << "Difference per step: " << diffPerKernel << " ms" << std::endl;
     std::cout << "Difference percentage: " << diffPercentage << "%" << std::endl;
 
     return 0;
