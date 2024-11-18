@@ -4,8 +4,8 @@
 #include "../check_hip.h"
 
 #define N 1024 //64 // Matrix dimensions (1024x1024)
-#define NSTEP 10000 //100000
-#define NKERNEL 10 // Number of kernels
+#define NSTEP 1000 //100000
+#define NKERNEL 100 // Number of kernels
 #define SKIPBY 0
 
 // HIP kernel for matrix multiplication
@@ -22,7 +22,7 @@ __global__ void matMulKernel(float* A, float* B, float* C, int width) {
 }
 
 // Function for non-graph implementation
-void matrixMultiplyNoGraph(int width, float* totalTimeWith, float* totalTimeWithout) {
+void matrixMultiplyNoGraph( ) {
     dim3 block(32, 32); // 1024 threads
     dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
 
@@ -363,19 +363,19 @@ int main() {
 
     // Compute the difference for without including Graph
     float difference2 = nonGraphTotalTimeWithout - graphTotalTimeWithout;
-    float diffPerKernel2 = difference2 / (NSTEP-1);
+    float diffPerKernel2 = difference2 / ((NSTEP-1) * NKERNEL);
     float diffPercentage2 = (difference2 / nonGraphTotalTimeWithout) * 100;
 
     // Print the differences
     std::cout << "=======Comparison without Graph Creation=======" << std::endl;
     std::cout << "Difference: " << difference2 << " ms" << std::endl;
-    std::cout << "Difference per step: " << diffPerKernel2 << " ms" << std::endl;
+    std::cout << "Difference per kernel: " << diffPerKernel2 << " ms" << std::endl;
     std::cout << "Difference percentage: " << diffPercentage2 << "%" << std::endl;
 
     // Print the differences
     std::cout << "=======Comparison=======" << std::endl;
     std::cout << "Difference: " << difference << " ms" << std::endl;
-    std::cout << "Difference per step: " << diffPerKernel << " ms" << std::endl;
+    std::cout << "Difference per kernel: " << diffPerKernel << " ms" << std::endl;
     std::cout << "Difference percentage: " << diffPercentage << "%" << std::endl;
 
     return 0;
