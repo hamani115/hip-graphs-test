@@ -10,7 +10,7 @@
 #include "../check_hip.h"
 
 #define N (1U << 20) //(1 << 12)  // Size of the arrays - 4096
-#define NSTEP 10000  // Number of steps
+#define NSTEP 100000  // Number of steps
 #define SKIPBY 0
 
 // HIP kernel to add 10 arrays element-wise
