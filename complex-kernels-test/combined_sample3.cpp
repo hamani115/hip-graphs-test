@@ -5,7 +5,8 @@
 #include <cassert>  // For assert in result verification
 #include  "../check_hip.h"
 
-#define NSTEP 1000
+#define NSTEP 10
+#define SKIPBY 0
 
 // Kernel functions
 __global__ void kernelA(double* arrayA, size_t size){
@@ -111,7 +112,7 @@ float runWithoutGraph() {
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
-    int skipBy = 0;
+    // int skipBy = 0;
     // Variables for Welford's algorithm
     double mean = 0.0;
     double M2 = 0.0;
@@ -157,7 +158,7 @@ float runWithoutGraph() {
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));
 
         // Time calculations
-        if (i >= skipBy) {
+        if (i >= SKIPBY) {
             totalTime += elapsedTime;
 
             // Welford's algorithm for calculating mean and variance
@@ -184,7 +185,7 @@ float runWithoutGraph() {
     // Print out the time statistics
     std::cout << "=======Setup (No Graph)=======" << std::endl;
     std::cout << "Iterations: " << NSTEP << std::endl;
-    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Skip By: " << SKIPBY << std::endl;
     std::cout << "Kernels: kernelA, kernelB, kernelC" << std::endl;
     std::cout << "Number of Blocks: " << numOfBlocks << std::endl;
     std::cout << "Threads per Block: " << threadsPerBlock << std::endl;
@@ -192,7 +193,7 @@ float runWithoutGraph() {
     std::cout << "=======Results (No Graph)=======" << std::endl;
     std::cout << "First Run: " << firstCreateTime << " ms" << std::endl;
     std::cout << "Average Time with firstRun: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without firstRun: " << (totalTime / (NSTEP - 1 - skipBy)) << " ms" << std::endl;
+    std::cout << "Average Time without firstRun: " << (totalTime / (NSTEP - 1 - SKIPBY)) << " ms" << std::endl;
     std::cout << "Variance: " <<  varianceTime << " ms^2" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
     std::cout << "Time Spread: " << lowerTime << " - " << upperTime << " ms" << std::endl;
@@ -316,7 +317,7 @@ float runWithGraph() {
     float totalTime = 0.0f;
     float upperTime = 0.0f;
     float lowerTime = 0.0f;
-    int skipBy = 0;
+    // int skipBy = 0;
     // Variables for Welford's algorithm
     double mean = 0.0;
     double M2 = 0.0;
@@ -335,7 +336,7 @@ float runWithGraph() {
         HIP_CHECK(hipEventElapsedTime(&elapsedTime, execStart, execStop));
 
         // Time calculations
-        if (i >= skipBy) {
+        if (i >= SKIPBY) {
             totalTime += elapsedTime;
 
             // Welford's algorithm for calculating mean and variance
@@ -362,7 +363,7 @@ float runWithGraph() {
     // Print out the time statistics
     std::cout << "=======Setup (With Graph)=======" << std::endl;
     std::cout << "Iterations: " << NSTEP << std::endl;
-    std::cout << "Skip By: " << skipBy << std::endl;
+    std::cout << "Skip By: " << SKIPBY << std::endl;
     std::cout << "Kernels: kernelA, kernelB, kernelC" << std::endl;
     std::cout << "Number of Blocks: " << numOfBlocks << std::endl;
     std::cout << "Threads per Block: " << threadsPerBlock << std::endl;
@@ -370,7 +371,7 @@ float runWithGraph() {
     std::cout << "=======Results (With Graph)=======" << std::endl;
     std::cout << "Graph Creation Time: " << graphCreateTime << " ms" << std::endl;
     std::cout << "Average Time with Graph: " << meanTime << " ms" << std::endl;
-    std::cout << "Average Time without Graph: " << (totalTime / (NSTEP - 1 - skipBy)) << " ms" << std::endl;
+    std::cout << "Average Time without Graph: " << (totalTime / (NSTEP - 1 - SKIPBY)) << " ms" << std::endl;
     std::cout << "Variance: " << varianceTime << " ms^2" << std::endl;
     std::cout << "Standard Deviation: " << stdDevTime << " ms" << std::endl;
     std::cout << "Time Spread: " << lowerTime << " - " << upperTime << " ms" << std::endl;
