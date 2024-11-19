@@ -4,7 +4,7 @@
 #include "../check_hip.h"
 
 #define N 1024 //64 // Matrix dimensions (1024x1024)
-#define NSTEP 1000 //100000
+#define NSTEP 5000 //100000
 #define NKERNEL 100 // Number of kernels
 #define SKIPBY 0
 
@@ -22,7 +22,7 @@ __global__ void matMulKernel(float* A, float* B, float* C, int width) {
 }
 
 // Function for non-graph implementation
-void matrixMultiplyNoGraph( ) {
+void matrixMultiplyNoGraph(int width, float* totalTimeWith, float* totalTimeWithout) {
     dim3 block(32, 32); // 1024 threads
     dim3 grid((width + block.x - 1) / block.x, (width + block.y - 1) / block.y);
 
