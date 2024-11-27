@@ -14,7 +14,7 @@
 #define MYDEVICE 0
 
 #define N (1U << 20)//4096  // 4096 elements
-#define NSTEP 100000
+#define NSTEP 1000
 #define SKIPBY 0
 
 // HIP kernel to add 10 arrays element-wise
