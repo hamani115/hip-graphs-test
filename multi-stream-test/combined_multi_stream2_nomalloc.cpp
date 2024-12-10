@@ -6,8 +6,8 @@
 
 #include  "../check_hip.h"
 
-#define NSTEP 100000
-#define SKIPBY 0
+#define DEFAULT_NSTEP 100000
+#define DEFAULT_SKIPBY 0
 
 // Kernel functions
 __global__ void kernelA(double* arrayA, size_t size){
@@ -35,26 +35,29 @@ __global__ void kernelE(int* arrayB, size_t size) {
     if(x < size){ arrayB[x] += 2; }
 }
 
-struct set_vector_args {
-    double* h_array;
-    double value;
-    size_t size;
-};
+// struct set_vector_args {
+//     double* h_array;
+//     double value;
+//     size_t size;
+// };
 
-void set_vector(void* args) {
-    set_vector_args* h_args = reinterpret_cast<set_vector_args*>(args);
-    double* array = h_args->h_array;
-    size_t size = h_args->size;
-    double value = h_args->value;
+// void set_vector(void* args) {
+//     set_vector_args* h_args = reinterpret_cast<set_vector_args*>(args);
+//     double* array = h_args->h_array;
+//     size_t size = h_args->size;
+//     double value = h_args->value;
 
-    // Initialize h_array with the specified value
-    for (size_t i = 0; i < size; i++) {
-        array[i] = value;
-    }
-}
+//     // Initialize h_array with the specified value
+//     for (size_t i = 0; i < size; i++) {
+//         array[i] = value;
+//     }
+// }
 
 // Function for non-graph implementation with multiple streams
-void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout) {
+void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout, int nstep, int skipby) {
+    const int NSTEP = nstep;
+    const int SKIPBY = skipby;
+
     constexpr int numOfBlocks = 1024;
     constexpr int threadsPerBlock = 1024;
     constexpr size_t arraySize = 1U << 20;
@@ -65,10 +68,20 @@ void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout) {
     double* h_array = nullptr;
     HIP_CHECK(hipHostMalloc((void**)&h_array, arraySize * sizeof(double)));
 
+    // Initialize host array
+    // std::fill_n(h_array, arraySize, initValue);
+    for (size_t i = 0; i < arraySize; i++) {
+        h_array[i] = initValue;
+    }
+
     // Create streams
     hipStream_t stream1, stream2;
     HIP_CHECK(hipStreamCreate(&stream1));
     HIP_CHECK(hipStreamCreate(&stream2));
+
+    // Allocate device memory
+    HIP_CHECK(hipMallocAsync(&d_arrayA, arraySize * sizeof(double), stream1));
+    HIP_CHECK(hipMallocAsync(&d_arrayB, arraySize * sizeof(int), stream1));
 
     // Set Timer for first run
     hipEvent_t firstCreateStart, firstCreateStop;
@@ -78,18 +91,14 @@ void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout) {
 
     // START measuring first run time
     HIP_CHECK(hipEventRecord(firstCreateStart, stream1));
-
-    // Allocate device memory
-    HIP_CHECK(hipMallocAsync(&d_arrayA, arraySize * sizeof(double), stream1));
-    HIP_CHECK(hipMallocAsync(&d_arrayB, arraySize * sizeof(int), stream1));
         
     // Initialize host array
     // std::fill_n(h_array, arraySize, initValue);
     // for (size_t i = 0; i < arraySize; i++) {
     //     h_array[i] = initValue;
     // }
-    set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
-    HIP_CHECK(hipLaunchHostFunc(stream1, set_vector, args));
+    // set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
+    // HIP_CHECK(hipLaunchHostFunc(stream1, set_vector, args));
 
     // Copy h_array to device on stream1
     HIP_CHECK(hipMemcpyAsync(d_arrayA, h_array, arraySize * sizeof(double), hipMemcpyHostToDevice, stream1));
@@ -127,9 +136,6 @@ void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout) {
     // Copy data back to host on stream1
     HIP_CHECK(hipMemcpyAsync(h_array, d_arrayA, arraySize * sizeof(double), hipMemcpyDeviceToHost, stream1));
 
-    HIP_CHECK(hipFreeAsync(d_arrayA, stream1));
-    HIP_CHECK(hipFreeAsync(d_arrayB, stream1));
-
     HIP_CHECK(hipStreamSynchronize(stream1));
 
     // Wait for all operations to complete
@@ -152,19 +158,19 @@ void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout) {
 
     // Execute the sequence multiple times
     for(int i = 0; i < NSTEP; ++i){
-        HIP_CHECK(hipEventRecord(execStart, stream1));
+        for (size_t j = 0; j < arraySize; j++) {
+            h_array[j] = initValue;
+        }
 
-        // Allocate device memory
-        HIP_CHECK(hipMallocAsync(&d_arrayA, arraySize * sizeof(double), stream1));
-        HIP_CHECK(hipMallocAsync(&d_arrayB, arraySize * sizeof(int), stream1));
+        HIP_CHECK(hipEventRecord(execStart, stream1));
 
         // Reinitialize host array
         // std::fill_n(h_array, arraySize, initValue);
         // for (size_t j = 0; j < arraySize; j++) {
         //     h_array[j] = initValue;
         // }
-        set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
-        HIP_CHECK(hipLaunchHostFunc(stream1, set_vector, args));
+        // set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
+        // HIP_CHECK(hipLaunchHostFunc(stream1, set_vector, args));
 
         // Copy h_array to device on stream1
         HIP_CHECK(hipMemcpyAsync(d_arrayA, h_array, arraySize * sizeof(double), hipMemcpyHostToDevice, stream1));
@@ -196,9 +202,6 @@ void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout) {
 
         // Copy data back to host on stream1
         HIP_CHECK(hipMemcpyAsync(h_array, d_arrayA, arraySize * sizeof(double), hipMemcpyDeviceToHost, stream1));
-
-        HIP_CHECK(hipFreeAsync(d_arrayA, stream1));
-        HIP_CHECK(hipFreeAsync(d_arrayB, stream1));
             
         HIP_CHECK(hipStreamSynchronize(stream1));
 
@@ -265,6 +268,8 @@ void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout) {
         std::cerr << "Validation passed." << std::endl;
     }
 
+    HIP_CHECK(hipFreeAsync(d_arrayA, stream1));
+    HIP_CHECK(hipFreeAsync(d_arrayB, stream1));
     // Clean up
     HIP_CHECK(hipEventDestroy(execStart));
     HIP_CHECK(hipEventDestroy(execStop));
@@ -282,7 +287,10 @@ void runWithoutGraph(float* totalTimeWith, float* totalTimeWithout) {
 }
 
 // Function for graph implementation with multiple streams
-void runWithGraph(float* totalTimeWith, float* totalTimeWithout) {
+void runWithGraph(float* totalTimeWith, float* totalTimeWithout, int nstep, int skipby) {
+    const int NSTEP = nstep;
+    const int SKIPBY = skipby;
+
     constexpr int numOfBlocks = 1024;
     constexpr int threadsPerBlock = 1024;
     constexpr size_t arraySize = 1U << 20;
@@ -293,17 +301,25 @@ void runWithGraph(float* totalTimeWith, float* totalTimeWithout) {
     double* h_array = nullptr;
     HIP_CHECK(hipHostMalloc((void**)&h_array, arraySize * sizeof(double)));
 
+    for (size_t j = 0; j < arraySize; j++) {
+        h_array[j] = initValue;
+    }
+
     // Create streams
     hipStream_t stream1, stream2;
     HIP_CHECK(hipStreamCreate(&stream1));
     HIP_CHECK(hipStreamCreate(&stream2));
+
+    // Allocate device memory
+    HIP_CHECK(hipMallocAsync(&d_arrayA, arraySize * sizeof(double), stream1));
+    HIP_CHECK(hipMallocAsync(&d_arrayB, arraySize * sizeof(int), stream1));
 
     // Set Timer for graph creation
     hipEvent_t graphCreateStart, graphCreateStop;
     float graphCreateTime = 0.0f;
     HIP_CHECK(hipEventCreate(&graphCreateStart));
     HIP_CHECK(hipEventCreate(&graphCreateStop));
-    set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
+    // set_vector_args* args = new set_vector_args{h_array, initValue, arraySize};
 
     // Start measuring graph creation time
     HIP_CHECK(hipEventRecord(graphCreateStart, stream1));
@@ -311,12 +327,8 @@ void runWithGraph(float* totalTimeWith, float* totalTimeWithout) {
     // Begin graph capture on stream1 only
     HIP_CHECK(hipStreamBeginCapture(stream1, hipStreamCaptureModeGlobal));
 
-    // Allocate device memory
-    HIP_CHECK(hipMallocAsync(&d_arrayA, arraySize * sizeof(double), stream1));
-    HIP_CHECK(hipMallocAsync(&d_arrayB, arraySize * sizeof(int), stream1));
-
     // Launch host function to initialize h_array
-    HIP_CHECK(hipLaunchHostFunc(stream1, set_vector, args));
+    // HIP_CHECK(hipLaunchHostFunc(stream1, set_vector, args));
 
     // Copy h_array to device on stream1
     HIP_CHECK(hipMemcpyAsync(d_arrayA, h_array, arraySize * sizeof(double), hipMemcpyHostToDevice, stream1));
@@ -355,10 +367,6 @@ void runWithGraph(float* totalTimeWith, float* totalTimeWithout) {
     // Copy data back to host on stream1
     HIP_CHECK(hipMemcpyAsync(h_array, d_arrayA, arraySize * sizeof(double), hipMemcpyDeviceToHost, stream1));
 
-    // Free device memory asynchronously
-    HIP_CHECK(hipFreeAsync(d_arrayA, stream1));
-    HIP_CHECK(hipFreeAsync(d_arrayB, stream1));
-
     // End graph capture
     hipGraph_t graph;
     HIP_CHECK(hipStreamEndCapture(stream1, &graph));
@@ -390,6 +398,11 @@ void runWithGraph(float* totalTimeWith, float* totalTimeWithout) {
 
     // Launch the graph multiple times
     for(int i = 0; i < NSTEP; ++i){
+
+        for (size_t j = 0; j < arraySize; j++) {
+            h_array[j] = initValue;
+        }
+
         HIP_CHECK(hipEventRecord(execStart, stream1));
 
         // Launch the graph
@@ -459,6 +472,10 @@ void runWithGraph(float* totalTimeWith, float* totalTimeWithout) {
         std::cerr << "Validation passed." << std::endl;
     }
 
+    // Free device memory asynchronously
+    HIP_CHECK(hipFreeAsync(d_arrayA, stream1));
+    HIP_CHECK(hipFreeAsync(d_arrayB, stream1));
+
     // Clean up
     HIP_CHECK(hipEventDestroy(execStart));
     HIP_CHECK(hipEventDestroy(execStop));
@@ -476,14 +493,17 @@ void runWithGraph(float* totalTimeWith, float* totalTimeWithout) {
     *totalTimeWithout = totalTime;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    const int NSTEP = (argc > 1) ? atoi(argv[1]) : DEFAULT_NSTEP;
+    const int SKIPBY = (argc > 2) ? atoi(argv[2]) : DEFAULT_SKIPBY;
+
     // Measure time for non-graph implementation
     float nonGraphTotalTime, nonGraphTotalTimeWithout;
-    runWithoutGraph(&nonGraphTotalTime, &nonGraphTotalTimeWithout);
+    runWithoutGraph(&nonGraphTotalTime, &nonGraphTotalTimeWithout, NSTEP, SKIPBY);
 
     // Measure time for graph implementation
     float graphTotalTime, graphTotalTimeWithout;
-    runWithGraph(&graphTotalTime, &graphTotalTimeWithout);
+    runWithGraph(&graphTotalTime, &graphTotalTimeWithout, NSTEP, SKIPBY);
         
     // Compute the difference
     float difference = nonGraphTotalTime - graphTotalTime;
