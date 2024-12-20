@@ -83,7 +83,7 @@ def generate_cputotaltime_plot(csv_path, output_dir):
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
         # plt.title(f'Total Time Difference Percentage in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
-        plt.title(f'Total Time in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'Total Time in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Total Time (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -171,7 +171,7 @@ def generate_launchtotaltime_plot(csv_path, output_dir):
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
         # plt.title(f'Time Difference Per Iteration in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
-        plt.title(f'Total Launch Time in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'Total Launch Time in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Total Launch Time (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -258,7 +258,7 @@ def generate_launchdifftotal_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'CPU Total Launch Time Difference in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'CPU Total Launch Time Difference in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('CPU Total Launch Time Difference (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -353,7 +353,7 @@ def generate_gputimeperstep_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'GPU Time Per Iteration in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'GPU Time Per Iteration in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Time Per Iteration (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -440,7 +440,7 @@ def generate_gpudiffperstep_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'GPU Time Difference Per Iteration in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'GPU Time Difference Per Iteration in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Time Difference Per Iteration (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -527,7 +527,7 @@ def generate_gpudiffpercent_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'GPU Total Time Difference Percentage in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'GPU Total Time Difference Percentage in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Total Time Difference Percentage (%)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -619,7 +619,7 @@ def generate_cputimeperstep_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'CPU Time Per Iteration in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'CPU Time Per Iteration in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Time Per Iteration (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -706,7 +706,7 @@ def generate_cpudiffperstep_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'CPU Time Difference Per Iteration in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'CPU Time Difference Per Iteration in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Time Difference Per Iteration (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -792,7 +792,7 @@ def generate_cpudiffpercent_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'CPU Total Time Difference Percentage in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'CPU Total Time Difference Percentage in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Total Time Difference Percentage (%)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -885,7 +885,7 @@ def generate_launchtimeperstep_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'Launch Time Per Iteration in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'Launch Time Per Iteration in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Time Per Iteration (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -974,7 +974,7 @@ def generate_launchdiffperstep_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'Launch Total Time Difference in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'Launch Total Time Difference in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Total Time Difference (ms)')
         plt.xscale('log')  # Use log scale for NSTEP
@@ -1061,7 +1061,7 @@ def generate_launchdiffpercent_plot(csv_path, output_dir):
             
         title_test = transform_string(os.path.splitext(os.path.basename(csv_path))[0],"_"," ")
 
-        plt.title(f'Launch Total Time Difference Percentage in CUDA (NVIDIA Tesla T4): {title_test} Test', fontsize=font_size)
+        plt.title(f'Launch Total Time Difference Percentage in HIP (AMD Radeon Pro W7800): {title_test} Test', fontsize=font_size)
         plt.xlabel('NSTEP (Number of Iterations)')
         plt.ylabel('Total Time Difference Percentage (%)')
         plt.xscale('log')  # Use log scale for NSTEP
