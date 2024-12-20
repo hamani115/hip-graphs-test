@@ -773,7 +773,7 @@ int main(int argc, char* argv[]) {
     const int NSTEP = (argc > 1) ? atoi(argv[1]) : DEFAULT_NSTEP;
     const int SKIPBY = (argc > 2) ? atoi(argv[2]) : DEFAULT_SKIPBY;
 
-    std::cout << "==============COMPLEX DIFFERENT SIZES KERNELS TEST==============" << std::endl;
+    std::cout << "==============COMPLEX MULTIPLE MALLOCAYSNC/FREEASYNC TEST==============" << std::endl;
     std::vector<int> nsteps = generateSequence(NSTEP);
     const int NUM_RUNS = 4;
     std::vector<CSVData> newDatas(nsteps.size());
@@ -899,7 +899,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    const std::string FILENAME = "complex_different_sizes_kernels.csv";
+    const std::string FILENAME = "complex_multi_malloc.csv";
     for (const auto &newData : newDatas) {
         updateOrAppendCSV(FILENAME, newData);
     }
