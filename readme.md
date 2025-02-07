@@ -79,6 +79,4 @@ HIP Graphs can help optimize performance by reducing CPU overhead and improving 
 
 ---
 
-*Feel free to open an issue or submit a pull request if you run into problems or wish to contribute improvements.*Below is an example **README** for your HIP code repository. It closely mirrors the CUDA version but adapts instructions for HIP/ROCm, using `hipcc` and `gfx1100`. Adjust paths, filenames, and other specifics as needed.
-
----
+*Feel free to open an issue or submit a pull request if you run into problems or wish to contribute improvements.*
