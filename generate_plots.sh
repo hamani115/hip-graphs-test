@@ -5,18 +5,26 @@ set -e
 
 # Paths to CSV files (modify these paths as needed)
 CSV_FILES=(
-    "./complex-kernels-test/complex_3_different_kernels.csv"
-    "./diffsize-kernels-test/complex_different_sizes_kernels.csv"
-    "./multi-stream-test/complex_multi_stream_kernels.csv"
-    "./multi-malloc-test/complex_multi_malloc.csv"
+    "./complex-kernels-test/complex_3_different_kernels_AMD.csv"
+    "./diffsize-kernels-test/complex_different_sizes_kernels_AMD.csv"
+    "./multi-stream-test/complex_multi_stream_kernels_AMD.csv"
+    "./multi-malloc-test/complex_multi_malloc_AMD.csv"
     # "/path/to/your/file2.csv"
 )
 
 # Output directory for plots
-OUTPUT_DIR="./output_plots"
+OUTPUT_DIR="./output_plots_AMD"
 
 # Path to the Python script
 PYTHON_SCRIPT="./plot_generator.py"
+
+# Check if NUM_RUNS is provided, otherwise default to 4
+if [[ -z "$1" ]]; then
+    NUM_RUNS=4
+    echo "No number of runs provided. Defaulting to NUM_RUNS = 4."
+else
+    NUM_RUNS=$1
+fi
 
 # Check if the Python script exists
 if [[ ! -f "$PYTHON_SCRIPT" ]]; then
