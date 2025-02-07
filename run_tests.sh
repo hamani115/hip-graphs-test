@@ -69,6 +69,5 @@ cd ..
 
 echo "Running generate_plots.sh with NUM_RUNS=$NUM_RUNS"
 bash generate_plots.sh "${NUM_RUNS}"
-# bash generate_plots_multitests.sh "${NUM_RUNS}"
 
 echo "All steps completed successfully."
