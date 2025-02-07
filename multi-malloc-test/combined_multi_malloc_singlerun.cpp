@@ -127,16 +127,16 @@ void runWithoutGraph(std::vector<float>& totalTimeWithArr, std::vector<float>& t
     HIP_CHECK(hipMemcpyAsync(d_arrayD, h_arrayD, arraySizeD*sizeof(float), hipMemcpyHostToDevice, stream));
     HIP_CHECK(hipMemcpyAsync(d_arrayE, h_arrayE, arraySizeE*sizeof(int), hipMemcpyHostToDevice, stream));
 
-    // hipLaunchKernelGGL(kernelA, dim3(numBlocksA), dim3(threadsPerBlock), 0, stream, d_arrayA, arraySizeA);
-    // hipLaunchKernelGGL(kernelB, dim3(numBlocksB), dim3(threadsPerBlock), 0, stream, d_arrayB, arraySizeB);
-    // hipLaunchKernelGGL(kernelC, dim3(numBlocksC), dim3(threadsPerBlock), 0, stream, d_arrayA, d_arrayB, arraySizeC);
-    // hipLaunchKernelGGL(kernelD, dim3(numBlocksD), dim3(threadsPerBlock), 0, stream, d_arrayD, arraySizeD);
-    // hipLaunchKernelGGL(kernelE, dim3(numBlocksE), dim3(threadsPerBlock), 0, stream, d_arrayE, arraySizeE);
-    kernelA<<<numBlocksA, threadsPerBlock, 0, stream>>>(d_arrayA, arraySizeA);
-    kernelB<<<numBlocksB, threadsPerBlock, 0, stream>>>(d_arrayB, arraySizeB);
-    kernelC<<<numBlocksC, threadsPerBlock, 0, stream>>>(d_arrayA, d_arrayB, arraySizeC);
-    kernelD<<<numBlocksD, threadsPerBlock, 0, stream>>>(d_arrayD, arraySizeD);
-    kernelE<<<numBlocksE, threadsPerBlock, 0, stream>>>(d_arrayE, arraySizeE);
+    hipLaunchKernelGGL(kernelA, dim3(numBlocksA), dim3(threadsPerBlock), 0, stream, d_arrayA, arraySizeA);
+    hipLaunchKernelGGL(kernelB, dim3(numBlocksB), dim3(threadsPerBlock), 0, stream, d_arrayB, arraySizeB);
+    hipLaunchKernelGGL(kernelC, dim3(numBlocksC), dim3(threadsPerBlock), 0, stream, d_arrayA, d_arrayB, arraySizeC);
+    hipLaunchKernelGGL(kernelD, dim3(numBlocksD), dim3(threadsPerBlock), 0, stream, d_arrayD, arraySizeD);
+    hipLaunchKernelGGL(kernelE, dim3(numBlocksE), dim3(threadsPerBlock), 0, stream, d_arrayE, arraySizeE);
+    // kernelA<<<numBlocksA, threadsPerBlock, 0, stream>>>(d_arrayA, arraySizeA);
+    // kernelB<<<numBlocksB, threadsPerBlock, 0, stream>>>(d_arrayB, arraySizeB);
+    // kernelC<<<numBlocksC, threadsPerBlock, 0, stream>>>(d_arrayA, d_arrayB, arraySizeC);
+    // kernelD<<<numBlocksD, threadsPerBlock, 0, stream>>>(d_arrayD, arraySizeD);
+    // kernelE<<<numBlocksE, threadsPerBlock, 0, stream>>>(d_arrayE, arraySizeE);
 
     HIP_CHECK(hipMemcpyAsync(h_arrayA, d_arrayA, arraySizeA*sizeof(double), hipMemcpyDeviceToHost, stream));
     HIP_CHECK(hipMemcpyAsync(h_arrayD, d_arrayD, arraySizeD*sizeof(float), hipMemcpyDeviceToHost, stream));
@@ -190,16 +190,16 @@ void runWithoutGraph(std::vector<float>& totalTimeWithArr, std::vector<float>& t
         HIP_CHECK(hipMemcpyAsync(d_arrayD, h_arrayD, arraySizeD*sizeof(float), hipMemcpyHostToDevice, stream));
         HIP_CHECK(hipMemcpyAsync(d_arrayE, h_arrayE, arraySizeE*sizeof(int), hipMemcpyHostToDevice, stream));
 
-        // hipLaunchKernelGGL(kernelA, dim3(numBlocksA), dim3(threadsPerBlock), 0, stream, d_arrayA, arraySizeA);
-        // hipLaunchKernelGGL(kernelB, dim3(numBlocksB), dim3(threadsPerBlock), 0, stream, d_arrayB, arraySizeB);
-        // hipLaunchKernelGGL(kernelC, dim3(numBlocksC), dim3(threadsPerBlock), 0, stream, d_arrayA, d_arrayB, arraySizeC);
-        // hipLaunchKernelGGL(kernelD, dim3(numBlocksD), dim3(threadsPerBlock), 0, stream, d_arrayD, arraySizeD);
-        // hipLaunchKernelGGL(kernelE, dim3(numBlocksE), dim3(threadsPerBlock), 0, stream, d_arrayE, arraySizeE);
-        kernelA<<<numBlocksA, threadsPerBlock, 0, stream>>>(d_arrayA, arraySizeA);
-        kernelB<<<numBlocksB, threadsPerBlock, 0, stream>>>(d_arrayB, arraySizeB);
-        kernelC<<<numBlocksC, threadsPerBlock, 0, stream>>>(d_arrayA, d_arrayB, arraySizeC);
-        kernelD<<<numBlocksD, threadsPerBlock, 0, stream>>>(d_arrayD, arraySizeD);
-        kernelE<<<numBlocksE, threadsPerBlock, 0, stream>>>(d_arrayE, arraySizeE);
+        hipLaunchKernelGGL(kernelA, dim3(numBlocksA), dim3(threadsPerBlock), 0, stream, d_arrayA, arraySizeA);
+        hipLaunchKernelGGL(kernelB, dim3(numBlocksB), dim3(threadsPerBlock), 0, stream, d_arrayB, arraySizeB);
+        hipLaunchKernelGGL(kernelC, dim3(numBlocksC), dim3(threadsPerBlock), 0, stream, d_arrayA, d_arrayB, arraySizeC);
+        hipLaunchKernelGGL(kernelD, dim3(numBlocksD), dim3(threadsPerBlock), 0, stream, d_arrayD, arraySizeD);
+        hipLaunchKernelGGL(kernelE, dim3(numBlocksE), dim3(threadsPerBlock), 0, stream, d_arrayE, arraySizeE);
+        // kernelA<<<numBlocksA, threadsPerBlock, 0, stream>>>(d_arrayA, arraySizeA);
+        // kernelB<<<numBlocksB, threadsPerBlock, 0, stream>>>(d_arrayB, arraySizeB);
+        // kernelC<<<numBlocksC, threadsPerBlock, 0, stream>>>(d_arrayA, d_arrayB, arraySizeC);
+        // kernelD<<<numBlocksD, threadsPerBlock, 0, stream>>>(d_arrayD, arraySizeD);
+        // kernelE<<<numBlocksE, threadsPerBlock, 0, stream>>>(d_arrayE, arraySizeE);
 
         HIP_CHECK(hipMemcpyAsync(h_arrayA, d_arrayA, arraySizeA*sizeof(double), hipMemcpyDeviceToHost, stream));
         HIP_CHECK(hipMemcpyAsync(h_arrayD, d_arrayD, arraySizeD*sizeof(float), hipMemcpyDeviceToHost, stream));
@@ -378,16 +378,16 @@ void runWithGraph(std::vector<float>& totalTimeWithArr, std::vector<float>& tota
     HIP_CHECK(hipMemcpyAsync(d_arrayD, h_arrayD, arraySizeD*sizeof(float), hipMemcpyHostToDevice, captureStream));
     HIP_CHECK(hipMemcpyAsync(d_arrayE, h_arrayE, arraySizeE*sizeof(int), hipMemcpyHostToDevice, captureStream));
 
-    // hipLaunchKernelGGL(kernelA, dim3(numBlocksA), dim3(threadsPerBlock), 0, captureStream, d_arrayA, arraySizeA);
-    // hipLaunchKernelGGL(kernelB, dim3(numBlocksB), dim3(threadsPerBlock), 0, captureStream, d_arrayB, arraySizeB);
-    // hipLaunchKernelGGL(kernelC, dim3(numBlocksC), dim3(threadsPerBlock), 0, captureStream, d_arrayA, d_arrayB, arraySizeC);
-    // hipLaunchKernelGGL(kernelD, dim3(numBlocksD), dim3(threadsPerBlock), 0, captureStream, d_arrayD, arraySizeD);
-    // hipLaunchKernelGGL(kernelE, dim3(numBlocksE), dim3(threadsPerBlock), 0, captureStream, d_arrayE, arraySizeE);
-    kernelA<<<numBlocksA, threadsPerBlock, 0, captureStream>>>(d_arrayA, arraySizeA);
-    kernelB<<<numBlocksB, threadsPerBlock, 0, captureStream>>>(d_arrayB, arraySizeB);
-    kernelC<<<numBlocksC, threadsPerBlock, 0, captureStream>>>(d_arrayA, d_arrayB, arraySizeC);
-    kernelD<<<numBlocksD, threadsPerBlock, 0, captureStream>>>(d_arrayD, arraySizeD);
-    kernelE<<<numBlocksE, threadsPerBlock, 0, captureStream>>>(d_arrayE, arraySizeE);
+    hipLaunchKernelGGL(kernelA, dim3(numBlocksA), dim3(threadsPerBlock), 0, captureStream, d_arrayA, arraySizeA);
+    hipLaunchKernelGGL(kernelB, dim3(numBlocksB), dim3(threadsPerBlock), 0, captureStream, d_arrayB, arraySizeB);
+    hipLaunchKernelGGL(kernelC, dim3(numBlocksC), dim3(threadsPerBlock), 0, captureStream, d_arrayA, d_arrayB, arraySizeC);
+    hipLaunchKernelGGL(kernelD, dim3(numBlocksD), dim3(threadsPerBlock), 0, captureStream, d_arrayD, arraySizeD);
+    hipLaunchKernelGGL(kernelE, dim3(numBlocksE), dim3(threadsPerBlock), 0, captureStream, d_arrayE, arraySizeE);
+    // kernelA<<<numBlocksA, threadsPerBlock, 0, captureStream>>>(d_arrayA, arraySizeA);
+    // kernelB<<<numBlocksB, threadsPerBlock, 0, captureStream>>>(d_arrayB, arraySizeB);
+    // kernelC<<<numBlocksC, threadsPerBlock, 0, captureStream>>>(d_arrayA, d_arrayB, arraySizeC);
+    // kernelD<<<numBlocksD, threadsPerBlock, 0, captureStream>>>(d_arrayD, arraySizeD);
+    // kernelE<<<numBlocksE, threadsPerBlock, 0, captureStream>>>(d_arrayE, arraySizeE);
 
     HIP_CHECK(hipMemcpyAsync(h_arrayA, d_arrayA, arraySizeA*sizeof(double), hipMemcpyDeviceToHost, captureStream));
     HIP_CHECK(hipMemcpyAsync(h_arrayD, d_arrayD, arraySizeD*sizeof(float), hipMemcpyDeviceToHost, captureStream));
