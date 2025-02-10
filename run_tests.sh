@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Set the architecture variable here
-OFFLOAD_ARCH="gfx1100"
+ARCH="gfx1100"
 
 # Set the test parameters here
 NSTEPS=10000
@@ -16,7 +16,7 @@ Test4_Filename="complex_multi_stream_kernels_AMD.csv"
 
 # Set Compiler and Flags
 COMPILER="hipcc"
-FLAGS="--offload-arch=${OFFLOAD_ARCH}"
+FLAGS="--offload-arch=${ARCH}"
 COMPILE="${COMPILER} ${FLAGS}"
 
 
@@ -27,7 +27,9 @@ CSV_UTIL="util/csv_util.cpp"
 # Command
 COMMAND="${COMPILE} ${CSV_UTIL}"
 
-echo "Compiling combined_3diff_kernels_singlerun.cpp with OFFLOAD_ARCH=${OFFLOAD_ARCH}"
+echo "Compiling for OFFLOAD_ARCH="${OFFLOAD_ARCH}" targe AMD GPU architecture"
+
+echo "Compiling combined_3diff_kernels_singlerun.cpp"
 rm -f complex-3diff-kernels-test/combined_3diff_kernels_singlerun
 ${COMMAND} complex-3diff-kernels-test/combined_3diff_kernels_singlerun.cpp -o complex-3diff-kernels-test/combined_3diff_kernels_singlerun
 
@@ -37,7 +39,7 @@ echo "Running combined_3diff_kernels_singlerun with arguments ${NSTEPS} ${SKIPBY
 ./combined_3diff_kernels_singlerun ${NSTEPS} ${SKIPBY} ${NUM_RUNS} ${Test1_Filename}
 cd ..
 
-echo "Compiling combined_diffsize_kernels_singlerun.cpp with OFFLOAD_ARCH=${OFFLOAD_ARCH}"
+echo "Compiling combined_diffsize_kernels_singlerun.cpp"
 rm -f complex-diffsize-kernels-test/combined_diffsize_kernels_singlerun
 ${COMMAND} complex-diffsize-kernels-test/combined_diffsize_kernels_singlerun.cpp -o complex-diffsize-kernels-test/combined_diffsize_kernels_singlerun
 
@@ -47,7 +49,7 @@ echo "Running combined_diffsize_kernels_singlerun with arguments ${NSTEPS} ${SKI
 ./combined_diffsize_kernels_singlerun ${NSTEPS} ${SKIPBY} ${NUM_RUNS} ${Test2_Filename}
 cd ..
 
-echo "Compiling combined_multi_malloc_singlerun.cpp with OFFLOAD_ARCH=${OFFLOAD_ARCH}"
+echo "Compiling combined_multi_malloc_singlerun.cpp"
 rm -f complex-multi-malloc-test/combined_multi_malloc_singlerun
 ${COMMAND} complex-multi-malloc-test/combined_multi_malloc_singlerun.cpp -o complex-multi-malloc-test/combined_multi_malloc_singlerun
 
@@ -57,7 +59,7 @@ echo "Running combined_multi_malloc_singlerun with arguments ${NSTEPS} ${SKIPBY}
 ./combined_multi_malloc_singlerun ${NSTEPS} ${SKIPBY} ${NUM_RUNS} ${Test3_Filename}
 cd ..
 
-echo "Compiling combined_multi_stream_singlerun.cpp with OFFLOAD_ARCH=${OFFLOAD_ARCH}"
+echo "Compiling combined_multi_stream_singlerun.cpp"
 rm -f complex-multi-stream-test/combined_multi_stream_singlerun
 ${COMMAND} complex-multi-stream-test/combined_multi_stream_singlerun.cpp -o complex-multi-stream-test/combined_multi_stream_singlerun
 
