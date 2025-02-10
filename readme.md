@@ -16,13 +16,13 @@ HIP Graphs can help optimize performance by reducing CPU overhead and improving 
 
 ### Repository Structure (Simplified)
 - **`complex-3diff-kernels-test/`**  
-  Contains the source file `combined_3diff_kernels.cpp` and outputs a CSV file (e.g., `complex_3_different_kernels.csv`).
+  Contains the source file `combined_3diff_kernels.cpp` and outputs a CSV file (e.g., `complex_3_different_kernels_AMD.csv`).
 - **`compelx-diffsize-kernels-test/`**  
-  Contains the source file `combined_diffsize_kernels_singlerun.cpp` and outputs a CSV file (e.g., `complex_different_sizes_kernels.csv`).
+  Contains the source file `combined_diffsize_kernels_singlerun.cpp` and outputs a CSV file (e.g., `complex_different_sizes_kernels_AMD.csv`).
 - **`complex-multi-malloc-test/`**  
-  Contains the source file `combined_multi_malloc_singlerun.cpp` and outputs a CSV file (e.g., `complex_multi_malloc.csv`).
+  Contains the source file `combined_multi_malloc_singlerun.cpp` and outputs a CSV file (e.g., `complex_multi_malloc_AMD.csv`).
 - **`complex-multi-stream-test/`**  
-  Contains the source file `combined_multi_stream_singlerun.cpp` and outputs a CSV file (e.g., `complex_multi_stream_kernels.csv`).
+  Contains the source file `combined_multi_stream_singlerun.cpp` and outputs a CSV file (e.g., `complex_multi_stream_kernels_AMD.csv`).
 - **`plot_generator.py`**  
   A Python script that reads CSV files and generates plots in a designated output directory.
 - **`run_tests.sh`**  
@@ -44,11 +44,11 @@ HIP Graphs can help optimize performance by reducing CPU overhead and improving 
     ```
    This single script will:
    - Compile each of the HIP test programs (using `hipcc --offload-arch=<gfx_target>`).
-   - Execute them with predefined arguments (generating CSV files).
+   - Execute the executable files with predefined arguments (generating CSV files).
    - Call `generate_plots.sh`, which runs `plot_generator.py` to create plots from the CSV results.
 
 3. **Check the results**:
-   - **CSV files** are generated in each test’s directory (e.g., `complex_3_different_kernels.csv`).
+   - **CSV files** are generated in each test’s directory (e.g., `complex_3_different_kernels_AMD.csv`).
    - **Plots** are stored in a default output directory (e.g., `./output_plots_AMD`).
 
 ## Customizing the Tests or Plots
