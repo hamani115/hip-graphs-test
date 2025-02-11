@@ -16,7 +16,7 @@ CSV_FILES=(
 OUTPUT_DIR="./output_plots_AMD"
 
 # Path to the Python script
-PYTHON_SCRIPT="./plot_generator.py"
+PYTHON_SCRIPT="./plots_generator.py"
 
 # Check if NUM_RUNS is provided, otherwise default to 4
 if [[ -z "$1" ]]; then
