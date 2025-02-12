@@ -8,7 +8,7 @@ CSV_FILES=(
     "./complex-3diff-kernels-test/complex_3_different_kernels_AMD.csv"
     "./complex-diffsize-kernels-test/complex_different_sizes_kernels_AMD.csv"
     "./complex-multi-stream-test/complex_multi_stream_kernels_AMD.csv"
-    "./complex-multi-malloc-test/complex_multi_malloc_AMD.csv"
+    "./complex-multi-malloc-test/complex_multi_mallocasync_AMD.csv"
     # "/path/to/your/file2.csv"
 )
 

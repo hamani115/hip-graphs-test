@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Ensure the script stops on error
+set -e
+
 # Set the architecture variable here
 ARCH="gfx1100"
 
@@ -16,7 +19,7 @@ Test4_Filename="complex_multi_stream_kernels_AMD.csv"
 
 # Set Compiler and Flags
 COMPILER="hipcc"
-FLAGS="--offload-arch=${ARCH}"
+FLAGS="--offload-arch=${ARCH} -std=c++20"
 COMPILE="${COMPILER} ${FLAGS}"
 
 
@@ -27,7 +30,7 @@ CSV_UTIL="util/csv_util.cpp"
 # Command
 COMMAND="${COMPILE} ${CSV_UTIL}"
 
-echo "Compiling for OFFLOAD_ARCH="${OFFLOAD_ARCH}" targe AMD GPU architecture"
+echo "Compiling for OFFLOAD_ARCH="${OFFLOAD_ARCH}" target AMD GPU architecture"
 
 echo "Compiling combined_3diff_kernels_singlerun.cpp"
 rm -f complex-3diff-kernels-test/combined_3diff_kernels_singlerun
@@ -49,14 +52,14 @@ echo "Running combined_diffsize_kernels_singlerun with arguments ${NSTEPS} ${SKI
 ./combined_diffsize_kernels_singlerun ${NSTEPS} ${SKIPBY} ${NUM_RUNS} ${Test2_Filename}
 cd ..
 
-echo "Compiling combined_multi_malloc_singlerun.cpp"
-rm -f complex-multi-malloc-test/combined_multi_malloc_singlerun
-${COMMAND} complex-multi-malloc-test/combined_multi_malloc_singlerun.cpp -o complex-multi-malloc-test/combined_multi_malloc_singlerun
+echo "Compiling combined_multi_mallocasync_singlerun.cpp"
+rm -f complex-multi-mallocasync-test/combined_multi_mallocasync_singlerun
+${COMMAND} complex-multi-mallocasync-test/combined_multi_mallocasync_singlerun.cpp -o complex-multi-malloc-test/combined_multi_mallocasync_singlerun
 
-echo "Entering complex-multi-malloc-test directory"
-cd complex-multi-malloc-test/ || exit 1
-echo "Running combined_multi_malloc_singlerun with arguments ${NSTEPS} ${SKIPBY} ${NUM_RUNS}"
-./combined_multi_malloc_singlerun ${NSTEPS} ${SKIPBY} ${NUM_RUNS} ${Test3_Filename}
+echo "Entering complex-multi-mallocasync-test directory"
+cd complex-multi-mallocasync-test/ || exit 1
+echo "Running combined_multi_mallocasync_singlerun with arguments ${NSTEPS} ${SKIPBY} ${NUM_RUNS}"
+./combined_multi_mallocasync_singlerun ${NSTEPS} ${SKIPBY} ${NUM_RUNS} ${Test3_Filename}
 cd ..
 
 echo "Compiling combined_multi_stream_singlerun.cpp"
